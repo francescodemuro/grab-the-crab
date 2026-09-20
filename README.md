@@ -221,7 +221,6 @@ On the technical side, Pablo worked on the mathematical and probabilistic backbo
 Pablo also led much of the product integration and UI refinement, turning the mathematical state into an interactive mission-control experience where judges can inspect belief, uncertainty, probable worlds and resource use — and visibly watch **field evidence → belief change → mission change**.
 
 **Francesco Demuro, Learning and Evaluation Stack**
-
 Single-handedly architected the entire learning and evaluation stack: the GNN actor-critic backbone and the joint (site, effort) policy, three independently-seeded training pipelines with full checkpointing for reproducibility, and the frozen R7/R8 benchmark protocol with statistically rigorous paired-bootstrap comparison tooling — including catching and fixing a subtle seed-leakage bug that had silently let the model see the answer, invalidating an entire earlier benchmark run before anyone noticed. Then, in the final push before submission, he designed and shipped the effort-aware RAMP planner end to end: a full calibration audit, a dual-population tuning process that caught and corrected an overfit configuration before it ever shipped, the statistical win-rate and confidence analysis behind the headline +4.67% relative detection improvement (98% bootstrap confidence), and the complete economic and time-savings translation — $1.28M and 164 volunteer field-days saved per year — grounded in real Washington State budget and monitoring-program data.
 
 
