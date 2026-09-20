@@ -1,36 +1,166 @@
 # Grab the Crab
 
-**Adaptive first-response mission control for marine invasive species.** HackMIT 2026.
+**Adaptive first-response mission control for marine invasive species.**  
+HackMIT 2026 · Sustainability
 
-A newly detected invasive species has an unknown true extent. Grab the Crab maintains an explicit probabilistic belief over that hidden extent, allocates limited field effort under imperfect detection, ingests new field evidence, updates its belief, and replans the next mission.
+> **One detection. Unknown extent. Limited field capacity. Where do we search next?**
+
+Grab the Crab turns imperfect field evidence into the next operational decision. Starting from one confirmed detection, it maintains an explicit probabilistic belief over the hidden extent of an invasion, decides **where to survey next and how much effort to spend there**, ingests the field return, updates the belief, and replans.
 
 ```
 OBSERVE → INFER → DECIDE → SURVEY → LEARN → REPLAN
 ```
 
-Built on real Washington Sea Grant Crab Team monitoring data (Salish Sea, European green crab, *Carcinus maenas*): real site coordinates, real habitat classes, a real 49-site/118-edge monitoring graph, and water-constrained travel routing from the SalishSeaCast ocean model.
+The core idea is simple:
 
-## Results
+> **Field evidence changes the belief. The changed belief changes the mission.**
 
-On 280 frozen benchmark incidents built on the real monitoring graph, the effort-aware planner found **4.67% more of the true infestation** than a fixed maximum-effort strategy at identical field-effort budget (41.9% vs 40.0% detected, 95% bootstrap CI excluding zero). It matched or beat that baseline in 88% of incidents. Equivalently, the traditional strategy needs about **21% more field effort** to reach the same outcome — on Washington's real program, that is on the order of **164 volunteer field-days a year**, or roughly **$1.28M/year** at current state funding, as an illustrative projection (see `reports/ramp_v2/economic_impact/receipt.md` for the full calculation and sources).
+## Why we built it
+
+Part of the inspiration is personal. We come from **Liguria, Italy**, where the coastline around the Cinque Terre is not an abstract sustainability case: the UNESCO-listed Portovenere–Cinque Terre cultural landscape includes a protected marine area, and the Cinque Terre National Park actively monitors coastal biodiversity and the spread of alien species. In 2026, a coastal BioBlitz in Monterosso explicitly included monitoring the distribution of alien species along the Ligurian coast.
+
+That made the problem feel immediate: after an invasive species is found, the hard question is not simply *“is it here?”* It is *“how far has it spread, where should we look next, and how much scarce field capacity should we spend before the next piece of evidence arrives?”*
+
+Our prototype is calibrated on the **Washington Sea Grant Crab Team** network because it provides structured, public monitoring data for European green crab (*Carcinus maenas*) in the Salish Sea. The inspiration is local; the technical evaluation uses a dataset rich enough to test the full sequential decision loop.
+
+Sources: [UNESCO World Heritage Centre — Portovenere, Cinque Terre and the Islands](https://whc.unesco.org/en/list/826), [Cinque Terre National Park — coastal monitoring BioBlitz, 2026](https://www.parconazionale5terre.it/dettaglio.php?id=85731), [Cinque Terre National Park — Marine Strategy and alien species](https://www.parconazionale5terre.it/dettaglio.php?id=32772).
+
+## Sustainability, twice
+
+Grab the Crab is designed around **two layers of sustainability**.
+
+**1. Protect ecosystems before an incursion becomes harder to contain.**  
+Invasive alien species are one of the five major direct drivers of biodiversity loss worldwide. They can alter habitats, compete with native species, prey on them, spread pathogens, and disrupt ecosystem services. IPBES/UNEP estimates that invasive alien species contributed to 60% of recorded global extinctions and imposed more than **$423B in annual global economic costs in 2019**.
+
+**2. Make conservation response itself more resource-efficient.**  
+Field response consumes people, traps, vessel trips, travel time, fuel and budget. Grab the Crab makes those trade-offs explicit: instead of automatically spending maximum effort everywhere, it chooses a site and an effort level from `{1, 3, 6}` based on current evidence. The goal is to preserve field capacity where extra effort has low marginal value and concentrate it where it matters most.
+
+We measure the second layer primarily in **field-effort units and deployments**. Any translation into real-world dollars, vessel hours or fuel is treated as illustrative until an explicit operational cost model is validated.
+
+Global context: [UNEP / IPBES Invasive Alien Species Assessment](https://www.unep.org/resources/report/invasive-alien-species-report).
+
+## What it does
+
+A confirmed first detection starts the incident. The true invasion extent remains hidden.
+
+Grab the Crab then:
+
+1. builds a probabilistic belief over which monitored sites may be occupied;
+2. models imperfect detectability explicitly, so a non-detection is evidence but never automatic proof of absence;
+3. recommends the next survey site and an effort level;
+4. receives a detection or non-detection from the field simulator;
+5. updates the posterior;
+6. replans using the remaining budget;
+7. reveals the hidden truth only at the end for evaluation.
+
+The judge can follow the recommendation or override it. The system keeps the same hidden incident underneath, so the full trajectory can be compared after reveal.
+
+## Real data, explicit uncertainty
+
+The project uses Washington Sea Grant Crab Team monitoring data from the Salish Sea:
+
+- **49 real monitoring sites** with authoritative coordinates;
+- real Crab Team habitat classes;
+- a **derived 118-edge connectivity graph built from those 49 real monitoring sites**;
+- water-constrained route proxies generated from the SalishSeaCast ocean-model mesh;
+- monitoring effort and field-protocol structure used to constrain the simulator and effort semantics.
+
+The graph connectivity is our derived operational representation, **not an official Crab Team graph**.
 
 ## How it works
 
-**Belief engine.** A pure-Python, framework-free finite-ensemble Bayesian engine (`src/adaptive_response/spatial_belief.py`). Each hypothesis pairs an ecological extent (which sites are occupied) with a detectability parameter q, updated exactly under `P(no detection | occupied, effort e) = (1 - q)^e`. Extents are sampled from four world-model families (`src/adaptive_response/world_models.py`): graph diffusion, spatial clustering, habitat-driven, and fragmented-patchy.
+### Bayesian belief engine
 
-**Hidden-truth firewall.** The true occupancy state lives in a separate simulator object (`HiddenWorld`) that planners and the UI structurally cannot reach before reveal — enforced by the type boundary, not by convention, and checked by tests.
+`src/adaptive_response/spatial_belief.py` implements a finite-ensemble Bayesian model over ecological extent and detectability. For an occupied site, the probability of seeing no detection after effort `e` is:
 
-**Planners** (`src/adaptive_response/`):
-- `planners.py` — a transparent frontier heuristic and an information-gain planner that scores every (site, effort) pair by expected entropy reduction over possible worlds.
-- `effort_aware_planner.py` — separates *where* to survey (belief-first site ranking) from *how much* effort to spend (information gained per unit cost), with an optional early-stop rule.
-- `dynamic_delimitation_planner.py` — a deterministic, non-Bayesian reactive baseline: a confirmed positive expands the local search frontier, a negative closes that branch without expanding it. Used as an honest operational comparator with a tested information firewall (it never reads belief, uncertainty, or possible worlds).
-- `rl/` — a graph neural network actor-critic policy (PyTorch) that picks (site, effort) jointly from the same observable graph state, trained via on-policy RL with independently seeded runs for reproducibility.
+```
+P(no detection | occupied, effort=e) = (1 - q)^e
+```
 
-**Product.** FastAPI backend (`web_app.py`, `mission_control.py`), a hand-written JavaScript/SVG frontend (`web/`) with a real coastline map, posterior-occupancy heat, a "probable worlds" panel, and full decision/outcome receipts. An interactive judge mode lets anyone play a full response campaign against the planner on the same hidden incident, then reveals the truth and scores every strategy side by side. Optional natural-language mission briefings via OpenAI (`narrate.py`, `copilot.py`).
+That means one empty check and six empty checks do not carry the same evidential weight.
 
-**Discipline.** Frozen, planner-independent benchmark case manifests with validation/test splits (`reports/milestones/`), multiple independently-seeded training runs, and paired bootstrap comparisons (`scripts/r8_paired_comparison.py`, `scripts/r11_paired_comparison.py`) rather than single-run point estimates.
+The belief ensemble spans multiple ecological world-model families rather than a single synthetic generator: graph diffusion, spatial clustering, habitat-driven extent and fragmented/patchy extent.
 
-## Running it
+### Hidden-truth firewall
+
+The true occupancy state lives in a separate `HiddenWorld`. Planner and UI code cannot access it before reveal. That separation is structural and covered by tests.
+
+### Graph decision layer
+
+Monitoring sites become nodes. The observable graph state can include:
+
+- occupancy belief;
+- uncertainty;
+- observed effort;
+- detections;
+- habitat/access context;
+- frontier information;
+- remaining budget and round.
+
+The neural network does **not** learn what a non-detection means. Bayesian inference determines the evidence semantics first; planners act on the resulting belief state.
+
+### Interchangeable planners
+
+The same mission loop supports multiple planners:
+
+- a transparent frontier heuristic;
+- an information-gain planner;
+- a resource-aware planner that separates **where** to search from **how much** effort to spend;
+- a deterministic non-Bayesian Dynamic Delimitation comparator;
+- a PyTorch GNN actor-critic policy that jointly selects `(site, effort)`.
+
+This modularity matters: the project is the decision loop, not a requirement to use the most complicated planner.
+
+## Product
+
+The interactive mission-control UI is served by FastAPI with a hand-written JavaScript/SVG frontend.
+
+It shows:
+
+- real monitoring coordinates on a coastline map;
+- posterior occupancy heat;
+- probable invasion worlds;
+- detectability belief;
+- current resource budget;
+- site/effort recommendations;
+- evidence-driven mission updates;
+- decision and outcome receipts;
+- hidden truth only after reveal.
+
+The memorable moment is intentionally causal: **a field return changes the posterior, and that changed posterior can move the next mission.**
+
+## Results
+
+We keep benchmark populations separated rather than presenting every evaluation case as one blind formal test.
+
+On the **100-case interactive evaluation population**, the frozen resource-aware planner detected **41.9%** of true occupied extent versus **40.0%** for a fixed maximum-effort comparator at the same 18-unit field budget — a **4.67% relative improvement**. It matched or exceeded that comparator in **88%** of incidents.
+
+Across the broader **pooled 280-case evaluation** (180 formal cases + 100 interactive-evaluation cases), the mean detected-extent advantage was **+1.58 percentage points**, with a paired bootstrap 95% interval of **[+0.08, +2.99] pp**.
+
+On the **180-case formal slice alone**, the effect remained directionally positive but the confidence interval crossed zero. We keep that result visible because the benchmark is meant to be able to prove us wrong.
+
+A separate effort-equivalent analysis on the 100-case evaluation population found that the fixed maximum-effort comparator required about **21% more simulated field effort** to reach the same mean detected fraction. We use that as a resource-efficiency illustration, not as proof of real-world dollar savings.
+
+Reproducible benchmark artifacts live under `configs/`, `reports/` and `scripts/`.
+
+## Validation discipline
+
+Complete ecological ground truth does not exist for unsampled coastline, so hidden occupancy remains synthetic by necessity. We do not treat one simulator as reality.
+
+The evaluation stack uses:
+
+- real-data-constrained incident geometry and habitat context;
+- multiple ecological world-model families;
+- frozen case manifests;
+- validation/test separation;
+- independently seeded learned-policy training;
+- paired comparisons and bootstrap intervals;
+- OOD lanes for world-model and detectability shifts;
+- a deterministic Dynamic Delimitation comparator with an explicit information firewall.
+
+The correct interpretation is **robustness to simulator assumptions**, not proof of real-world effectiveness.
+
+## Run it
 
 ```bash
 python -m venv .venv
@@ -42,43 +172,51 @@ python -m uvicorn adaptive_response.web_app:app --port 8000
 
 Open `http://127.0.0.1:8000`.
 
-Optional extras: `pip install -e ".[dev,rl]"` for the GNN/RL stack (requires PyTorch), `pip install -e ".[dev,llm]"` for the OpenAI-powered mission briefings.
+Optional extras:
 
-## Testing
+```bash
+pip install -e ".[dev,rl]"   # PyTorch GNN/RL stack
+pip install -e ".[dev,llm]"  # optional natural-language mission briefings
+```
+
+## Test it
 
 ```bash
 pip install -e ".[dev,ui]"
 pytest
 ```
 
-## Reproducing the benchmark results
+## Reproduce the benchmarks
 
 ```bash
-# Fixed-effort vs effort-aware planner vs GNN/RL on the frozen 180-case manifest
+# Effort-aware planner / fixed-effort / GNN-RL on the frozen R8 manifest
 python scripts/run_spatial_benchmark_r8.py --rl-checkpoint <checkpoint>.pt --out reports/r8_benchmark.csv
-python scripts/r8_paired_comparison.py --rl-csv reports/r8_benchmark_seed0.csv ... --out reports/r8_paired_comparison.md
 
-# GNN/RL vs the deterministic Dynamic Delimitation baseline
+# GNN/RL vs deterministic Dynamic Delimitation
 python scripts/run_r11_dynamic_benchmark.py --rl-checkpoint <checkpoint>.pt --out reports/r11_benchmark.csv
-python scripts/r11_paired_comparison.py --gnn-csv reports/r11_benchmark_seed0.csv ... --out reports/r11_paired_comparison.md
 
-# Effort-to-Parity: how much extra field effort a simpler strategy needs to
-# match the learned policy's result at the same budget
+# Conditional effort-to-parity analysis
 python scripts/r11_effort_to_parity.py --gnn-csv reports/r11_benchmark_seed0.csv ... --out-csv reports/r11_effort_to_parity.csv --out-md reports/r11_effort_to_parity.md
 
-# Retrain the GNN/RL policy from scratch
+# Retrain the learned policy
 python scripts/train_spatial_gnn_policy.py --run-name my_run --seed 0
 ```
 
 ## Data sources
 
 - Washington Sea Grant Crab Team monitoring data, Dryad (2017–2023, *Carcinus maenas*, Salish Sea).
-- Washington Sea Grant Crab Team volunteer program structure (`wsgcrabteam.uw.edu`).
-- Washington Dept. of Fish & Wildlife European Green Crab management publications and budget figures.
-- SalishSeaCast ocean model mesh (UBC), for water-constrained travel routing.
+- Washington Sea Grant Crab Team monitoring-program materials.
+- Washington Department of Fish & Wildlife European green crab management publications.
+- SalishSeaCast ocean-model mesh (UBC), used for water-constrained route proxies.
+- Cinque Terre National Park / Marine Protected Area public monitoring materials for project inspiration and Mediterranean context.
+- IPBES / UNEP invasive-alien-species assessment for global sustainability context.
 
 ## Team
 
-Francesco — learning and evaluation (GNN/RL policy, training, benchmark protocol and paired-comparison tooling, effort-aware planner, economic/time-savings analysis).
-Pablo — environment and product (simulator, belief engine, real-data pipeline, mission-control backend, interactive UI).
-Federico — ecological response logic (frontier delimitation strategy, species/habitat framing, demo narrative).
+Francesco — learning and evaluation: GNN/RL policy, training, benchmark protocol, paired-comparison tooling, effort-aware planning, resource-efficiency analysis.  
+Pablo — environment and product: simulator, belief engine, real-data pipeline, mission-control backend, interactive UI.  
+Federico — ecological response logic: frontier delimitation strategy, species/habitat framing, demo narrative.
+
+---
+
+**Grab the Crab does not try to predict the ocean. It helps decide what question to ask it next.**
