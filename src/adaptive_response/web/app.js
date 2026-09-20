@@ -193,7 +193,7 @@ function renderMissionPanel() {
 
   $("marine-copy").textContent = top
     ? "Site priority stays Frontier-first. Effort is chosen separately from the Bayesian occupancy/q posterior to preserve field capacity when extra checks add limited value."
-    : "Three-deployment response window complete. Any unused effort remains preserved capacity.";
+    : "Field budget allocated. Any unused effort remains preserved capacity.";
 
   const staticSites = state.data.static_response?.plan_sites || [];
   $("static-site").textContent = staticSites.length ? `Site ${staticSites[0]}` : "—";
@@ -1164,8 +1164,8 @@ function renderPerformance() {
     const small = locked.querySelector("small");
     if (small) {
       small.textContent = state.data.can_reveal
-        ? "Three deployments complete. Reveal to compare hidden-truth outcomes."
-        : `Complete ${state.data.resources.missions_remaining} more deployment(s) to unlock hidden truth.`;
+        ? "Field budget allocated. Reveal to compare hidden-truth outcomes."
+        : `${state.data.resources.remaining_budget} effort unit(s) remaining — keep deploying to unlock hidden truth.`;
     }
     return;
   }

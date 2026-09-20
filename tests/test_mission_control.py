@@ -7,14 +7,6 @@ import pytest
 from adaptive_response.mission_control import MissionControlSession
 
 
-def _run_to_completion(session: MissionControlSession) -> dict:
-    snap = session.plan()
-    while True:
-        snap = session.execute()
-        if snap["can_reveal"]:
-            return snap
-
-
 def _deploy_top_recommendation(session: MissionControlSession, effort: int = 6) -> dict:
     snap = session.snapshot()
     site_id = snap["global_recommendations"][0]["site_id"]
@@ -66,20 +58,78 @@ def test_hidden_truth_is_absent_from_every_snapshot_before_reveal() -> None:
     assert revealed["incident"]["truth_family"]
 
 
-def test_full_round_trip_completes_three_deployment_window_and_reaches_reveal() -> None:
+def test_full_round_trip_follows_marine_until_budget_exhausted_and_reaches_reveal() -> None:
+    """The response window is budget-driven (up to 18 windows of >=1 effort
+    unit each), not a fixed three-deployment cap. Following Marine's own
+    recommended effort every round must run until the 18-unit budget is
+    fully spent, however many windows that takes."""
     session = MissionControlSession()
+    snap = session.snapshot()
 
-    snap = _run_to_completion(session)
-    assert snap["resources"]["round"] == 3
-    assert snap["resources"]["mission_horizon"] == 3
-    assert snap["resources"]["missions_remaining"] == 0
-    assert 0 <= snap["resources"]["remaining_budget"] <= snap["resources"]["initial_budget"]
+    rounds = 0
+    while not snap["can_reveal"]:
+        rec = snap["global_recommendations"][0]
+        snap = session.deploy(site_id=rec["site_id"], effort=int(rec["recommended_effort"]))
+        rounds += 1
+        assert rounds <= 18  # defensive cap, never a target
+
+    assert snap["resources"]["mission_horizon"] == 18
+    assert snap["resources"]["remaining_budget"] == 0
+    assert snap["resources"]["spent_budget"] == snap["resources"]["initial_budget"]
     assert snap["can_reveal"] and not snap["can_plan"] and not snap["can_execute"]
 
     snap = session.reveal()
     assert snap["revealed"]
     occupied = [n["id"] for n in snap["nodes"] if n["true_occupied"]]
     assert snap["incident"]["initial_detection"] in occupied
+
+
+def test_effort_six_path_uses_exactly_three_windows() -> None:
+    """6 + 6 + 6 = 18: budget exhausted in exactly 3 windows."""
+    session = MissionControlSession()
+    snap = session.snapshot()
+    rounds = 0
+    while not snap["can_reveal"]:
+        site_id = snap["global_recommendations"][0]["site_id"]
+        snap = session.deploy(site_id=site_id, effort=6)
+        rounds += 1
+        assert rounds <= 18
+    assert rounds == 3
+    assert snap["resources"]["spent_budget"] == 18
+    assert snap["resources"]["remaining_budget"] == 0
+
+
+def test_effort_three_path_uses_exactly_six_windows() -> None:
+    """3 x 6 = 18: budget exhausted in exactly 6 windows."""
+    session = MissionControlSession()
+    snap = session.snapshot()
+    rounds = 0
+    while not snap["can_reveal"]:
+        site_id = snap["global_recommendations"][0]["site_id"]
+        snap = session.deploy(site_id=site_id, effort=3)
+        rounds += 1
+        assert rounds <= 18
+    assert rounds == 6
+    assert snap["resources"]["spent_budget"] == 18
+    assert snap["resources"]["remaining_budget"] == 0
+
+
+def test_mixed_effort_path_terminates_exactly_when_budget_is_exhausted() -> None:
+    """3 + 1 + 6 + 1 + 3 + 3 + 1 = 18: a legal mixed trajectory must run
+    exactly that many windows, not stop early and not overrun."""
+    session = MissionControlSession()
+    snap = session.snapshot()
+    sequence = (3, 1, 6, 1, 3, 3, 1)
+    assert sum(sequence) == 18
+
+    for i, effort in enumerate(sequence):
+        assert not snap["can_reveal"], f"reveal unlocked early, before window {i + 1}"
+        site_id = snap["global_recommendations"][0]["site_id"]
+        snap = session.deploy(site_id=site_id, effort=effort)
+
+    assert snap["can_reveal"]
+    assert snap["resources"]["spent_budget"] == 18
+    assert snap["resources"]["remaining_budget"] == 0
 
 
 def test_propagated_belief_changes_never_duplicate_the_surveyed_sites() -> None:
@@ -231,18 +281,102 @@ def test_reveal_scores_marine_static_and_human_against_same_hidden_incident() ->
     )
 
 
-def test_low_effort_judge_path_preserves_capacity_after_three_deployments() -> None:
+def test_low_effort_judge_path_spends_the_full_budget_across_eighteen_windows() -> None:
+    """1 x 18 = 18: choosing the smallest effort every time buys the maximum
+    number of decision windows, and the campaign only ends once the full
+    18-unit budget is spent - it must NOT stop after three windows leaving
+    15 units unused."""
     session = MissionControlSession()
     snap = session.snapshot()
 
+    rounds = 0
     while not snap["can_reveal"]:
         site_id = snap["global_recommendations"][0]["site_id"]
         snap = session.deploy(site_id=site_id, effort=1)
+        rounds += 1
+        assert rounds <= 18
 
-    assert snap["resources"]["round"] == 3
-    assert snap["resources"]["spent_budget"] == 3
-    assert snap["resources"]["remaining_budget"] == 15
-    assert snap["resource_summary"]["capacity_preserved"] == 15
+    assert rounds == 18
+    assert snap["resources"]["spent_budget"] == 18
+    assert snap["resources"]["remaining_budget"] == 0
+    assert snap["resource_summary"]["capacity_preserved"] == 0
+
+
+def test_cannot_overspend_remaining_budget() -> None:
+    session = MissionControlSession()
+    snap = session.snapshot()
+    site_id = snap["global_recommendations"][0]["site_id"]
+    snap = session.deploy(site_id=site_id, effort=6)  # remaining 12
+    snap = session.deploy(site_id=snap["global_recommendations"][0]["site_id"], effort=6)  # remaining 6
+    snap = session.deploy(site_id=snap["global_recommendations"][0]["site_id"], effort=1)  # remaining 5
+
+    assert snap["resources"]["remaining_budget"] == 5
+    with pytest.raises(ValueError, match="exceeds remaining field budget"):
+        session.deploy(site_id=snap["global_recommendations"][0]["site_id"], effort=6)
+
+
+def test_reveal_stays_locked_while_budget_remains() -> None:
+    session = MissionControlSession()
+    snap = session.snapshot()
+    assert not snap["can_reveal"]
+    with pytest.raises(RuntimeError):
+        session.reveal()
+
+    site_id = snap["global_recommendations"][0]["site_id"]
+    snap = session.deploy(site_id=site_id, effort=6)  # remaining 12, still active
+    assert not snap["can_reveal"]
+    with pytest.raises(RuntimeError):
+        session.reveal()
+
+
+def test_hidden_truth_is_absent_from_every_node_before_reveal() -> None:
+    session = MissionControlSession()
+    snap = session.snapshot()
+    while not snap["can_reveal"]:
+        site_id = snap["global_recommendations"][0]["site_id"]
+        snap = session.deploy(site_id=site_id, effort=6)
+        assert all("true_occupied" not in node for node in snap["nodes"])
+    assert all("true_occupied" not in node for node in snap["nodes"])
+
+    revealed = session.reveal()
+    assert all("true_occupied" in node for node in revealed["nodes"])
+
+
+def test_same_seed_and_same_action_sequence_is_deterministic() -> None:
+    """Same incident + same (site, effort) sequence -> same field outcomes,
+    independent of how many windows the trajectory happens to take."""
+    sequence = (3, 1, 6, 1, 3, 3, 1)
+
+    def run(seed: int) -> list[tuple[str, int, bool]]:
+        session = MissionControlSession()
+        snap = session.reset(seed=seed)
+        trace = []
+        for effort in sequence:
+            site_id = snap["global_recommendations"][0]["site_id"]
+            snap = session.deploy(site_id=site_id, effort=effort)
+            obs = snap["last_round"]["observations"][0]
+            trace.append((obs["site_id"], obs["effort"], obs["detection"]))
+        return trace
+
+    assert run(seed=7) == run(seed=7)
+
+
+def test_comparator_tracks_share_the_same_hidden_incident_and_full_budget() -> None:
+    """Marine and Static must be evaluated against the identical hidden
+    world and must each account for the entire 18-unit budget - a policy
+    choosing smaller efforts is not allowed to be truncated at three
+    windows while leaving field capacity unaccounted for."""
+    session = MissionControlSession()
+    snap = session.snapshot()
+    while not snap["can_reveal"]:
+        rec = snap["global_recommendations"][0]
+        snap = session.deploy(site_id=rec["site_id"], effort=int(rec["recommended_effort"]))
+    revealed = session.reveal()
+    performance = revealed["performance"]
+
+    assert performance["marine"]["occupied_total"] == performance["static"]["occupied_total"]
+    assert performance["marine"]["effort_spent"] == 18
+    assert performance["static"]["effort_spent"] == 18
 
 
 def test_mission_updated_flag_means_evidence_changed_counterfactual_next_site() -> None:

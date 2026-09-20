@@ -43,7 +43,12 @@ _INCIDENT_PREFERRED_MIN_SITES = 12
 _DRAWS_PER_MODEL = 60
 _Q_BELIEF_VALUES = (0.05, 0.10, 0.20)
 _EFFORT_LEVELS = (1, 3, 6)
-_DEMO_MISSION_HORIZON = 3
+# Defensive cap only: every legal action costs >=1 effort unit out of an
+# 18-unit budget, so a normal campaign reaches remaining_budget == 0 (and
+# therefore `transition.done`) at or before this many windows on its own.
+# This is NOT a target number of deployments - a policy choosing smaller
+# efforts legitimately runs more windows before the budget is exhausted.
+_MAX_RESPONSE_WINDOWS = 18
 _EFFORT_INFORMATION_RETENTION = 0.65
 _EFFORT_DETECTION_RETENTION_LOW = 0.55
 _EFFORT_DETECTION_RETENTION_MEDIUM = 0.68
@@ -823,7 +828,7 @@ class MissionControlSession:
         transition = loop.execute_pending()
         if (
             not transition.done
-            and transition.public_state_after.round >= _DEMO_MISSION_HORIZON
+            and transition.public_state_after.round >= _MAX_RESPONSE_WINDOWS
         ):
             loop.force_complete()
             transition = replace(
@@ -1261,14 +1266,16 @@ class MissionControlSession:
                 "capacity_preserved": public.remaining_budget,
                 "teams": public.teams,
                 "round": public.round,
-                "mission_horizon": _DEMO_MISSION_HORIZON,
-                "missions_remaining": max(
-                    0, _DEMO_MISSION_HORIZON - public.round
-                ),
+                "mission_horizon": _MAX_RESPONSE_WINDOWS,
+                # Upper bound on further windows (each costs >=1 unit), not a
+                # target - the tighter, more meaningful bound is whatever
+                # field budget remains.
+                "missions_remaining": public.remaining_budget,
                 "effort_levels": list(_EFFORT_LEVELS),
                 "horizon_semantics": (
-                    "Hackathon response window: up to three field deployments. "
-                    "Unspent effort remains preserved capacity."
+                    "Response continues until the 18-unit field budget is spent, "
+                    f"up to {_MAX_RESPONSE_WINDOWS} windows. Lower effort now preserves "
+                    "capacity for additional searches later."
                 ),
             },
             "mission": self._serialize_mission(self._mission),
@@ -1587,7 +1594,7 @@ class MissionControlSession:
 
         while (
             loop.phase not in (LoopPhase.COMPLETE, LoopPhase.REVEALED)
-            and len(mission_efforts) < _DEMO_MISSION_HORIZON
+            and len(mission_efforts) < _MAX_RESPONSE_WINDOWS
         ):
             spatial_before = loop.current_spatial_belief
             transition = loop.run_round()
@@ -1652,7 +1659,7 @@ class MissionControlSession:
             detected_snapshots.append((cumulative_effort, detected))
 
             if (
-                len(mission_efforts) >= _DEMO_MISSION_HORIZON
+                len(mission_efforts) >= _MAX_RESPONSE_WINDOWS
                 and loop.phase not in (LoopPhase.COMPLETE, LoopPhase.REVEALED)
             ):
                 loop.force_complete()
@@ -1705,7 +1712,7 @@ class MissionControlSession:
             "mission_efforts": mission_efforts,
             "mission_receipts": mission_receipts,
             "missions_completed": len(mission_efforts),
-            "mission_horizon": _DEMO_MISSION_HORIZON,
+            "mission_horizon": _MAX_RESPONSE_WINDOWS,
             "field_detections_beyond_initial": new_field_detections,
             "effort_spent": cumulative_effort,
             "capacity_preserved": max(0, int(incident.budget) - cumulative_effort),
@@ -1812,8 +1819,12 @@ class MissionControlSession:
                 else 0.0
             ),
             "missions_completed": completed,
-            "mission_horizon": _DEMO_MISSION_HORIZON,
-            "missions_remaining": max(0, _DEMO_MISSION_HORIZON - completed),
+            "mission_horizon": _MAX_RESPONSE_WINDOWS,
+            # Upper bound on further windows, not a target: each remaining
+            # window costs at least 1 effort unit, so this equals whatever
+            # field budget is left. The actual number of future windows
+            # depends on the effort the policy chooses at each step.
+            "missions_remaining": max(0, self._budget - spent),
             "confirmed_detections": int(curve[-1]["field_detections"]) if curve else 1,
             "next_recommended_effort": next_effort,
             "high_effort_equivalent_for_completed_missions": high_equivalent,
@@ -1821,9 +1832,11 @@ class MissionControlSession:
                 0, high_equivalent - spent
             ),
             "semantics": (
-                "The judging response window allows three deployments. The adaptive planner may "
-                "leave part of the 18-unit field budget unspent; preserved capacity is "
-                "the direct field-capacity signal. No dollar conversion is assumed."
+                "The response continues until the 18-unit field budget is spent (at most "
+                f"{_MAX_RESPONSE_WINDOWS} windows, since every action costs at least 1 unit). "
+                "Choosing lower effort now preserves capacity for additional searches later; "
+                "choosing higher effort spends more of the budget for stronger detection power "
+                "at the current site. No dollar conversion is assumed."
             ),
         }
 
@@ -1906,7 +1919,7 @@ class MissionControlSession:
             "mission_efforts": mission_efforts,
             "mission_receipts": mission_receipts,
             "missions_completed": len(mission_efforts),
-            "mission_horizon": _DEMO_MISSION_HORIZON,
+            "mission_horizon": _MAX_RESPONSE_WINDOWS,
             "field_detections_beyond_initial": new_field_detections,
             "effort_spent": cumulative_effort,
             "capacity_preserved": max(0, self._budget - cumulative_effort),
