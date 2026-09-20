@@ -4,7 +4,7 @@
 
 ## Step 1 — internally measured: effort-equivalent gap
 
-`effort_equivalent_budget.py` runs `FixedHighEffortPlanner` (the resource baseline) at increasing budgets on the same 100-case demo library used throughout this branch, holding the same hidden worlds fixed, and finds the budget at which its mean detected fraction reaches Marine's own mean at budget=18 (0.4185, `reports/ramp_v2/demo_population/summary.json`).
+`effort_equivalent_budget.py` runs `FixedHighEffortPlanner` (the resource baseline) at increasing budgets on the same 100-case demo library used throughout this branch, holding the same hidden worlds fixed, and finds the budget at which its mean detected fraction reaches Grab the Crab's own mean at budget=18 (0.4185, `reports/ramp_v2/demo_population/summary.json`).
 
 | Fixed High Effort budget | Mean detected fraction |
 |---|---|
@@ -14,7 +14,7 @@
 | 21 | 0.4129 |
 | 22 | 0.4196 |
 
-Linear interpolation between 21 and 22 for the target 0.4185: **budget ≈ 21.8**. Fixed High Effort needs ~21% more field effort than Marine's 18-unit budget to reach the same detection outcome.
+Linear interpolation between 21 and 22 for the target 0.4185: **budget ≈ 21.8**. Fixed High Effort needs ~21% more field effort than Grab the Crab's 18-unit budget to reach the same detection outcome.
 
 ## Step 2 — real, sourced external figures
 
