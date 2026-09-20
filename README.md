@@ -213,7 +213,7 @@ python scripts/train_spatial_gnn_policy.py --run-name my_run --seed 0
 
 ## Team
 
-**Pablo — concept and project direction, Bayesian/statistical backend, and product/UI.**  
+**Pablo Ronco — concept and project direction, Bayesian/statistical backend, and product/UI.**  
 Pablo originated and developed the core project direction from the early concept stage, helping steer Grab the Crab away from a generic invasive-species map and toward the post-detection decision problem that became its north star: *where should we search next, how much effort should we spend, and how should the mission change when new evidence arrives?* He also helped keep the simulator, inference engine, planners and product aligned around that decision loop as the project evolved.
 
 On the technical side, Pablo worked on the mathematical and probabilistic backbone of the system. He developed the Bayesian belief layer that represents multiple possible invasion extents together with uncertain detectability, and made field evidence effort-aware through `P(no detection | occupied, effort=e) = (1-q)^e`. This means a weak non-detection and a strong non-detection are mathematically different observations rather than both being treated as “absence.” The backend exposes posterior occupancy probabilities, uncertainty and detectability belief to the planner while keeping the realized hidden world structurally separate, and connects that inference state to the simulator, real monitoring context and planner-facing graph state.
