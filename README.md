@@ -131,17 +131,29 @@ The memorable moment is intentionally causal: **a field return changes the poste
 
 ## Results
 
-We keep benchmark populations separated rather than presenting every evaluation case as one blind formal test.
+We keep the **current live product audit** separate from our earlier frozen benchmark lanes so that changes to the interactive effort policy are not retroactively attributed to older evaluations.
 
-On the **100-case interactive evaluation population**, the frozen resource-aware planner detected **41.9%** of true occupied extent versus **40.0%** for a fixed maximum-effort comparator at the same 18-unit field budget — a **4.67% relative improvement**. It matched or exceeded that comparator in **88%** of incidents.
+### Current live product
 
-Across the broader **pooled 280-case evaluation** (180 formal cases + 100 interactive-evaluation cases), the mean detected-extent advantage was **+1.58 percentage points**, with a paired bootstrap 95% interval of **[+0.08, +2.99] pp**.
+After fixing the product effort policy so that `{1, 3, 6}` are genuinely used over time, we reran the current live planner on the same **100 frozen UI incidents** at the same **18-unit field budget**.
+
+The current adaptive policy detected **40.5%** of true occupied extent versus **40.2%** for the fixed maximum-effort Static response, and matched or exceeded Static in **90 of 100 incidents**.
+
+More importantly for the product behavior we set out to demonstrate, the adaptive policy no longer collapses to maximum effort: across **492 missions**, it used **e1 in 23.8%**, **e3 in 38.4%**, and **e6 in 37.8%** of actions. Campaigns ranged from **3 to 14 missions**, and **56/100 incidents** used at least two different effort levels.
+
+We treat this 100-case result as a **product behavior and sanity audit**, not as proof of real-world effectiveness or as a new formal performance benchmark. No new formal confidence interval is claimed for this current-product audit.
+
+### Earlier frozen benchmark lane
+
+Earlier frozen evaluation artifacts used a different resource-aware planner configuration. On its **100-case evaluation population**, that configuration detected **41.9%** of true occupied extent versus **40.0%** for its fixed maximum-effort comparator — a **4.67% relative difference** — and matched or exceeded the comparator in **88%** of incidents.
+
+Across the broader **pooled 280-case evaluation** associated with that frozen benchmark lane (180 formal cases + 100 evaluation cases), the mean detected-extent advantage was **+1.58 percentage points**, with a paired bootstrap 95% interval of **[+0.08, +2.99] pp**.
 
 On the **180-case formal slice alone**, the effect remained directionally positive but the confidence interval crossed zero. We keep that result visible because the benchmark is meant to be able to prove us wrong.
 
-A separate effort-equivalent analysis on the 100-case evaluation population found that the fixed maximum-effort comparator required about **21% more simulated field effort** to reach the same mean detected fraction. We use that as a resource-efficiency illustration, not as proof of real-world dollar savings.
+A separate effort-equivalent analysis on the same frozen benchmark lane found that the fixed maximum-effort comparator required about **21% more simulated field effort** to reach the same mean detected fraction. We use that only as a resource-efficiency illustration, not as measured real-world savings.
 
-Reproducible benchmark artifacts live under `configs/`, `reports/` and `scripts/`.
+The current live-product audit is documented in `reports/ui_effort_policy_audit.md`; reproducible benchmark artifacts live under `configs/`, `reports/` and `scripts/`.
 
 ## Validation discipline
 
@@ -227,7 +239,7 @@ He also worked extensively on the product and UI, translating the backend into a
 
 **Francesco Demuro, Learning and Evaluation Stack.**
 
-Single-handedly architected the entire learning and evaluation stack: the GNN actor-critic backbone and the joint (site, effort) policy, three independently-seeded training pipelines with full checkpointing for reproducibility, and the frozen R7/R8 benchmark protocol with statistically rigorous paired-bootstrap comparison tooling — including catching and fixing a subtle seed-leakage bug that had silently let the model see the answer, invalidating an entire earlier benchmark run before anyone noticed. Then, in the final push before submission, he designed and shipped the effort-aware RAMP planner end to end: a full calibration audit, a dual-population tuning process that caught and corrected an overfit configuration before it ever shipped, the statistical win-rate and confidence analysis behind the headline +4.67% relative detection improvement (98% bootstrap confidence), and the illustrative economic/time translation of the simulated effort gap — equivalent in scale to about $1.28M and 164 field-days per year under the stated proportional assumptions, grounded in real Washington State budget and monitoring-program data, not measured real-world savings.
+Single-handedly architected the entire learning and evaluation stack: the GNN actor-critic backbone and the joint (site, effort) policy, three independently-seeded training pipelines with full checkpointing for reproducibility, and the frozen R7/R8 benchmark protocol with statistically rigorous paired-bootstrap comparison tooling — including catching and fixing a subtle seed-leakage bug that had silently let the model see the answer, invalidating an entire earlier benchmark run before anyone noticed. Then, in the final push before submission, he designed and shipped the effort-aware RAMP planner end to end: a full calibration audit, a dual-population tuning process that caught and corrected an overfit configuration before it ever shipped, the statistical analysis behind the earlier frozen benchmark lane — including its +4.67% relative detection difference on the 100-case evaluation population and the paired-bootstrap analysis reported for the broader pooled evaluation — and the illustrative economic/time translation of the simulated effort gap — equivalent in scale to about $1.28M and 164 field-days per year under the stated proportional assumptions, grounded in real Washington State budget and monitoring-program data, not measured real-world savings.
 
 
 
