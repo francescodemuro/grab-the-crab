@@ -213,8 +213,7 @@ python scripts/train_spatial_gnn_policy.py --run-name my_run --seed 0
 
 ## Team
 
-Francesco — learning and evaluation: GNN/RL policy, training, benchmark protocol, paired-comparison tooling, effort-aware planning, resource-efficiency analysis.  
-Pablo — environment and product: simulator, belief engine, real-data pipeline, mission-control backend, interactive UI.  
+Francesco single-handedly architected the entire learning and evaluation stack: the GNN actor-critic backbone and the joint (site, effort) policy, three independently-seeded training pipelines with full checkpointing for reproducibility, and the frozen R7/R8 benchmark protocol with statistically rigorous paired-bootstrap comparison tooling — including catching and fixing a subtle seed-leakage bug that had silently let the model see the answer, invalidating an entire earlier benchmark run before anyone noticed. Then, in the final push before submission, he designed and shipped the effort-aware RAMP planner end to end: a full calibration audit, a dual-population tuning process that caught and corrected an overfit configuration before it ever shipped, the statistical win-rate and confidence analysis behind the headline +4.67% relative detection improvement (98% bootstrap confidence), and the complete economic and time-savings translation — $1.28M and 164 volunteer field-days saved per year — grounded in real Washington State budget and monitoring-program data.Pablo — environment and product: simulator, belief engine, real-data pipeline, mission-control backend, interactive UI.  
 Federico — ecological response logic: frontier delimitation strategy, species/habitat framing, demo narrative.
 
 ---
