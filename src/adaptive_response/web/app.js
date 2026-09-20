@@ -1086,7 +1086,7 @@ function drawEffortChart(allRows) {
   // Actual trajectory length, not the 18-window defensive cap - at least 3
   // slots so the static reference is visible before the first adaptive move.
   const displayMissionCount = Math.max(STATIC_REFERENCE_MISSIONS, completedMissions);
-  const width = Math.max(560, 46 * displayMissionCount + 60);
+  const width = 560;
   const height = 250;
   const margin = { left: 42, right: 18, top: 20, bottom: 38 };
   const plotH = height - margin.top - margin.bottom;
