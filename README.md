@@ -81,4 +81,4 @@ python scripts/train_spatial_gnn_policy.py --run-name my_run --seed 0
 
 Francesco — learning and evaluation (GNN/RL policy, training, benchmark protocol and paired-comparison tooling, effort-aware planner, economic/time-savings analysis).
 Pablo — environment and product (simulator, belief engine, real-data pipeline, mission-control backend, interactive UI).
-Fede — ecological response logic (frontier delimitation strategy, species/habitat framing, demo narrative).
+Federico — ecological response logic (frontier delimitation strategy, species/habitat framing, demo narrative).
