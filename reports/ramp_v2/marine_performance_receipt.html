@@ -1,4 +1,4 @@
-<title>Marine Performance Receipt</title>
+<title>Grab the Crab Performance Receipt</title>
 <style>
   :root{
     color-scheme:light;
@@ -147,12 +147,12 @@
     <div class="card hero">
       <div class="kicker">Average detection improvement</div>
       <div class="big">+4.67%</div>
-      <div class="sub">Marine detects <b>4.67% more</b> of the true invasive extent than a fixed
+      <div class="sub">Grab the Crab detects <b>4.67% more</b> of the true invasive extent than a fixed
         maximum-effort response — the standard non-adaptive approach — using the identical field budget.</div>
       <div class="vs"><b class="mono" style="color:var(--marine)">41.9%</b><span class="arrow">›</span><b class="mono" style="color:var(--fixed)">40.0%</b></div>
     </div>
     <div class="kpis">
-      <div class="kpi"><div class="v">41.9%</div><div class="l">Marine detects</div></div>
+      <div class="kpi"><div class="v">41.9%</div><div class="l">Grab the Crab detects</div></div>
       <div class="kpi"><div class="v">40.0%</div><div class="l">Fixed effort</div></div>
       <div class="kpi"><div class="v">94%</div><div class="l">Confidence</div></div>
     </div>
@@ -161,9 +161,9 @@
   <div class="right">
     <div class="card chart-card">
       <h2>Detected extent by approach</h2>
-      <div class="chart-body"><svg id="barchart" viewBox="0 0 460 190" role="img" aria-label="Marine detects 41.9 percent versus Fixed High Effort 40.0 percent, with a 95 percent confidence interval"></svg></div>
+      <div class="chart-body"><svg id="barchart" viewBox="0 0 460 190" role="img" aria-label="Grab the Crab detects 41.9 percent versus Fixed High Effort 40.0 percent, with a 95 percent confidence interval"></svg></div>
       <div class="legend-row">
-        <span><i class="dot" style="background:var(--marine)"></i>Marine (adaptive)</span>
+        <span><i class="dot" style="background:var(--marine)"></i>Grab the Crab (adaptive)</span>
         <span><i class="dot" style="background:var(--fixed)"></i>Fixed high effort</span>
         <span style="margin-left:auto;color:var(--muted)">thin line = 95% CI on the gap</span>
       </div>
@@ -173,7 +173,7 @@
       <h2>Outcome across all 100 incidents</h2>
       <div class="stack-wrap">
         <div class="outcome-nums outcome-nums-2">
-          <div class="win"><div class="v">88%</div><div class="l">Marine matches or beats the standard approach</div></div>
+          <div class="win"><div class="v">88%</div><div class="l">Grab the Crab matches or beats the standard approach</div></div>
           <div class="tie"><div class="v">2.3&times;</div><div class="l">More outright wins than losses</div></div>
         </div>
         <div class="stack-bar">
@@ -218,7 +218,7 @@
   svg.appendChild(el("line",{x1:ML,x2:W-MR,y1:H-MB,y2:H-MB,class:"axis-line"}));
 
   const bars = [
-    {label:"Marine", value:41.9, ci:[39.4,44.6], cls:"bar-marine", color:"var(--marine)", cx: ML+plotW*0.28},
+    {label:"Grab the Crab", value:41.9, ci:[39.4,44.6], cls:"bar-marine", color:"var(--marine)", cx: ML+plotW*0.28},
     {label:"Fixed High Effort", value:40.0, ci:null, cls:"bar-fixed", color:"var(--fixed)", cx: ML+plotW*0.72},
   ];
   const barW = 74;
