@@ -135,7 +135,7 @@ async function bootstrap() {
 
 function renderCaseSelect() {
   $("case-select").innerHTML = (state.cases?.cases || []).map((row) => {
-    const demo = row.case_id === "incident_097" ? "★ DEMO · " : "";
+    const demo = row.case_id === "incident_079" ? "★ DEMO · " : "";
     return `<option value="${row.case_id}">${demo}${String(row.index).padStart(3, "0")} · ${row.label}</option>`;
   }).join("");
 }
@@ -150,8 +150,11 @@ function render(data, previous = state.data) {
     ? `${String(data.case.index).padStart(3, "0")} / ${data.case.count}`
     : data.case.case_id;
 
-  const horizon = data.resources.mission_horizon || 3;
-  $("round").textContent = `${Math.min(data.resources.round, horizon)} / ${horizon}`;
+  const completedMissions = Number(data.resources.round || 0);
+  $("round").textContent =
+    data.can_reveal || data.revealed
+      ? "Complete"
+      : `Mission ${completedMissions + 1}`;
   $("budget-left").textContent = `${data.resources.remaining_budget} / ${data.resources.initial_budget}`;
   $("truth-state").textContent = data.revealed ? "REVEALED" : "LOCKED";
   $("truth-state").classList.toggle("revealed", data.revealed);
@@ -187,13 +190,13 @@ function renderMissionPanel() {
     ? fmtPct(top.predictive_detection?.[String(top.recommended_effort)])
     : "—";
   $("marine-saved").textContent = top
-    ? `${top.effort_recommendation?.effort_saved_vs_max ?? 0} units`
-    : `${state.data.resources.capacity_preserved ?? 0} units`;
+    ? `${Math.max(0, Number(state.data.resources.remaining_budget ?? 0) - Number(top.recommended_effort ?? 0))} units`
+    : `${state.data.resources.remaining_budget ?? 0} units`;
   $("marine-rank-badge").textContent = top ? "#1 current" : "complete";
 
   $("marine-copy").textContent = top
     ? "Site priority stays Frontier-first. Effort is chosen separately from the Bayesian occupancy/q posterior to preserve field capacity when extra checks add limited value."
-    : "Field budget allocated. Any unused effort remains preserved capacity.";
+    : "Field-response budget allocated. Reveal the hidden extent to evaluate the completed response.";
 
   const staticSites = state.data.static_response?.plan_sites || [];
   $("static-site").textContent = staticSites.length ? `Site ${staticSites[0]}` : "—";
@@ -440,24 +443,11 @@ function renderResourceCard() {
 
   $("resource-spent").textContent = `${r.effort_spent} / ${initial}`;
   $("resource-left").textContent = remaining;
-  $("resource-missions").textContent = `${r.missions_completed} / ${r.mission_horizon || 3}`;
-  $("resource-avoided").textContent = r.effort_avoided_vs_always_high_for_completed_missions;
+  $("resource-missions").textContent = `${r.missions_completed}`;
+  $("resource-avoided").textContent =
+    r.next_recommended_effort != null ? `e${r.next_recommended_effort}` : "—";
   $("capacity-percent").textContent = fmtPct(fraction);
   $("capacity-ring").style.setProperty("--capacity-angle", `${Math.round(clamp01(fraction) * 360)}deg`);
-
-  renderConversion();
-}
-
-function renderConversion() {
-  const avoided = Number(state.data?.resource_summary?.effort_avoided_vs_always_high_for_completed_missions || 0);
-  const minutes = Number($("minutes-per-unit").value || 0);
-  const cost = Number($("cost-per-unit").value || 0);
-  const pieces = [];
-  if (minutes > 0) pieces.push(`${Math.round(avoided * minutes)} minutes of field work`);
-  if (cost > 0) pieces.push(`$${(avoided * cost).toFixed(0)} operational cost`);
-  $("conversion-output").textContent = pieces.length
-    ? `At your local rates, the currently avoided effort corresponds to approximately ${pieces.join(" and ")}.`
-    : "Enter local rates to estimate operational savings. Values are operator-supplied and are not used by the ecological model.";
 }
 
 function ordinalValue(raw) {
@@ -1065,22 +1055,45 @@ function renderLiveCharts() {
 
   $("live-kpis").innerHTML = `
     <div><small>Confirmed detections</small><b>${summary.confirmed_detections}</b></div>
-    <div><small>Effort spent</small><b>${summary.effort_spent}</b></div>
-    <div><small>Capacity left</small><b>${summary.capacity_preserved}</b></div>
-    <div><small>Deployments</small><b>${summary.missions_completed}/${summary.mission_horizon}</b></div>`;
+    <div><small>Effort spent</small><b>${summary.effort_spent} / ${state.data.resources.initial_budget}</b></div>
+    <div><small>Capacity remaining</small><b>${summary.capacity_preserved} / ${state.data.resources.initial_budget}</b></div>
+    <div><small>Missions completed</small><b>${summary.missions_completed}</b></div>`;
 
-  drawEffortChart(rows, summary.mission_horizon || 3);
-  drawDetectionChart(rows, summary.mission_horizon || 3);
+  drawEffortChart(rows);
+  drawDetectionChart(rows);
 }
 
-function drawEffortChart(rows, horizon) {
+// Static always precommits exactly 3 x e6 = 18 (see _StaticResponsePlanner) -
+// its reference bars never extend past mission 3, regardless of how long the
+// adaptive trajectory runs.
+const STATIC_REFERENCE_MISSIONS = 3;
+const STATIC_REFERENCE_EFFORT = 6;
+
+function missionLabelStep(missionCount) {
+  if (missionCount <= 8) return 1;
+  if (missionCount <= 12) return 2;
+  return 3;
+}
+
+function drawEffortChart(allRows) {
   const svg = $("effort-chart");
   svg.innerHTML = "";
-  const width = 560;
+  // resource_curve's first row is a synthetic round-0 starting point
+  // (cumulative_effort 0, mission_effort 0), not a real mission - exclude it
+  // so mission numbering and bar count match the actual trajectory.
+  const rows = allRows.filter((row) => Number(row.round) > 0);
+  const completedMissions = rows.length;
+  // Actual trajectory length, not the 18-window defensive cap - at least 3
+  // slots so the static reference is visible before the first adaptive move.
+  const displayMissionCount = Math.max(STATIC_REFERENCE_MISSIONS, completedMissions);
+  const width = Math.max(560, 46 * displayMissionCount + 60);
   const height = 250;
   const margin = { left: 42, right: 18, top: 20, bottom: 38 };
   const plotH = height - margin.top - margin.bottom;
-  const sx = (round) => margin.left + ((round - 0.5) / horizon) * (width - margin.left - margin.right);
+  const barSlot = (width - margin.left - margin.right) / displayMissionCount;
+  const barWidth = Math.min(32, barSlot * 0.6);
+  const staticBarWidth = Math.min(50, barSlot * 0.85);
+  const sx = (mission) => margin.left + (mission - 0.5) * barSlot;
   const sy = (effort) => height - margin.bottom - (Number(effort) / 6) * plotH;
 
   [0, 3, 6].forEach((effort) => {
@@ -1091,24 +1104,31 @@ function drawEffortChart(rows, horizon) {
     svg.appendChild(label);
   });
 
-  for (let round = 1; round <= horizon; round += 1) {
-    const x = sx(round);
-    const row = rows.find((item) => Number(item.round) === round);
-    const actual = Number(row?.mission_effort || 0);
+  const labelStep = missionLabelStep(displayMissionCount);
+  for (let mission = 1; mission <= displayMissionCount; mission += 1) {
+    const x = sx(mission);
 
-    svg.appendChild(svgEl("rect", {
-      x: x - 25,
-      y: sy(6),
-      width: 50,
-      height: height - margin.bottom - sy(6),
-      rx: 7,
-      class: "static-effort-bar",
-    }));
-    if (actual > 0) {
+    // Static reference: only ever 3 missions at e6 - never drawn beyond that,
+    // since 4+ missions at e6 would need more than the 18-unit budget.
+    if (mission <= STATIC_REFERENCE_MISSIONS) {
       svg.appendChild(svgEl("rect", {
-        x: x - 16,
+        x: x - staticBarWidth / 2,
+        y: sy(STATIC_REFERENCE_EFFORT),
+        width: staticBarWidth,
+        height: height - margin.bottom - sy(STATIC_REFERENCE_EFFORT),
+        rx: 7,
+        class: "static-effort-bar",
+      }));
+    }
+
+    // Adaptive: only real executed missions get a bar.
+    const row = rows[mission - 1];
+    const actual = Number(row?.mission_effort || 0);
+    if (row && actual > 0) {
+      svg.appendChild(svgEl("rect", {
+        x: x - barWidth / 2,
         y: sy(actual),
-        width: 32,
+        width: barWidth,
         height: height - margin.bottom - sy(actual),
         rx: 7,
         class: "effort-bar",
@@ -1118,24 +1138,28 @@ function drawEffortChart(rows, horizon) {
       svg.appendChild(value);
     }
 
-    const xLabel = svgEl("text", { x, y: height - 14, "text-anchor": "middle", class: "chart-label" });
-    xLabel.textContent = `Mission ${round}`;
-    svg.appendChild(xLabel);
+    const showLabel = mission === displayMissionCount || (mission - 1) % labelStep === 0;
+    if (showLabel) {
+      const xLabel = svgEl("text", { x, y: height - 14, "text-anchor": "middle", class: "chart-label" });
+      xLabel.textContent = `M${mission}`;
+      svg.appendChild(xLabel);
+    }
   }
 
   const staticLabel = svgEl("text", { x: width - margin.right, y: sy(6) - 6, "text-anchor": "end", class: "chart-label" });
-  staticLabel.textContent = "grey = static e6";
+  staticLabel.textContent = "grey = static (3 x e6, then done)";
   svg.appendChild(staticLabel);
 }
 
-function drawDetectionChart(rows, horizon) {
+function drawDetectionChart(rows) {
   const svg = $("detection-chart");
   svg.innerHTML = "";
   const width = 560;
   const height = 250;
   const margin = { left: 42, right: 18, top: 20, bottom: 38 };
+  const maxEffort = Math.max(18, ...rows.map((row) => Number(row.cumulative_effort || 0)));
   const maxDetections = Math.max(3, ...rows.map((row) => Number(row.field_detections || 0))) + 1;
-  const sx = (round) => margin.left + (Number(round) / horizon) * (width - margin.left - margin.right);
+  const sx = (effort) => margin.left + (Number(effort) / maxEffort) * (width - margin.left - margin.right);
   const sy = (count) => height - margin.bottom - (Number(count) / maxDetections) * (height - margin.top - margin.bottom);
 
   for (let i = 0; i <= maxDetections; i += 1) {
@@ -1146,18 +1170,23 @@ function drawDetectionChart(rows, horizon) {
     svg.appendChild(label);
   }
 
-  const points = rows.map((row) => [sx(row.round), sy(row.field_detections)]);
-  if (points.length) {
-    const d = points.map((point, index) => `${index ? "L" : "M"} ${point[0]} ${point[1]}`).join(" ");
-    svg.appendChild(svgEl("path", { d, class: "live-detection-line" }));
-    points.forEach(([x, y]) => svg.appendChild(svgEl("circle", { cx: x, cy: y, r: 4, class: "live-dot-detection" })));
-  }
+  // rows[0] is already the synthetic round-0 starting point (cumulative
+  // effort 0, initial confirmed-detection count) - no separate origin point
+  // needed.
+  const points = rows.map((row) => [sx(row.cumulative_effort), sy(row.field_detections)]);
+  const d = points.map((point, index) => `${index ? "L" : "M"} ${point[0]} ${point[1]}`).join(" ");
+  svg.appendChild(svgEl("path", { d, class: "live-detection-line" }));
+  points.forEach(([x, y]) => svg.appendChild(svgEl("circle", { cx: x, cy: y, r: 4, class: "live-dot-detection" })));
 
-  for (let round = 0; round <= horizon; round += 1) {
-    const label = svgEl("text", { x: sx(round), y: height - 14, "text-anchor": "middle", class: "chart-label" });
-    label.textContent = round === 0 ? "Start" : `M${round}`;
+  [0, 3, 6, 9, 12, 15, 18].filter((effort) => effort <= maxEffort).forEach((effort) => {
+    const label = svgEl("text", { x: sx(effort), y: height - 14, "text-anchor": "middle", class: "chart-label" });
+    label.textContent = String(effort);
     svg.appendChild(label);
-  }
+  });
+
+  const axis = svgEl("text", { x: width / 2, y: height - 1, "text-anchor": "middle", class: "chart-title-label" });
+  axis.textContent = "Cumulative field effort";
+  svg.appendChild(axis);
 }
 
 function renderPerformance() {
@@ -1180,18 +1209,19 @@ function renderPerformance() {
   content.classList.remove("hidden");
 
   const performance = state.data.performance;
-  const receipt = performance.resource_receipt;
-  const saved = Number(receipt.effort_saved_vs_static || 0);
-  const detectionDelta = Number(receipt.detected_delta_marine_minus_static || 0);
+  const detectionDelta = Number(performance.resource_receipt.detected_delta_marine_minus_static || 0);
 
-  if (saved > 0 && detectionDelta >= 0) {
-    $("resource-receipt").innerHTML = `<strong>Adaptive response preserved ${saved} effort units vs Static</strong> while confirming ${detectionDelta === 0 ? "the same number of" : detectionDelta + " more"} occupied site${detectionDelta === 1 ? "" : "s"} in this blinded incident. <span>Illustrative case, not a universal claim.</span>`;
-  } else if (saved > 0) {
-    $("resource-receipt").innerHTML = `<strong>Adaptive response preserved ${saved} effort units vs Static</strong>, but this stochastic realization confirmed ${Math.abs(detectionDelta)} fewer occupied site${Math.abs(detectionDelta) === 1 ? "" : "s"}. This is an explicit resource/performance trade-off, not hidden by the UI.`;
+  let detectionLine;
+  if (detectionDelta === 0) {
+    detectionLine = "Both responses confirmed the same number of occupied sites in this blinded incident.";
+  } else if (detectionDelta > 0) {
+    detectionLine = `Adaptive confirmed ${detectionDelta} additional occupied site${detectionDelta === 1 ? "" : "s"} in this realization.`;
   } else {
-    $("resource-receipt").innerHTML = `<strong>No field-effort saving versus Static in this incident.</strong> The outcome receipt below shows the realized detection result without forcing a win.`;
+    detectionLine = `Static confirmed ${Math.abs(detectionDelta)} additional occupied site${Math.abs(detectionDelta) === 1 ? "" : "s"} in this realization.`;
   }
+  $("resource-receipt").innerHTML = `<strong>Same 18-unit budget. Different allocation strategy.</strong> ${detectionLine} <span>Single-incident outcomes are stochastic; aggregate policy claims come from the benchmark, not this one reveal.</span>`;
 
+  const effortTrail = (efforts) => (efforts || []).map((e) => `e${e}`).join(" · ");
   const entries = [
     ["ADAPTIVE", performance.marine, "primary"],
     ["STATIC RESPONSE", performance.static, "primary"],
@@ -1204,9 +1234,9 @@ function renderPerformance() {
     <small>true occupied sites confirmed</small>
     <div class="score-meta">
       <span>${row.effort_spent} effort</span>
-      <span>${row.capacity_preserved} preserved</span>
-      <span>${row.missions_completed} deployments</span>
+      <span>${row.missions_completed} mission${row.missions_completed === 1 ? "" : "s"}</span>
     </div>
+    <div class="score-trail">${effortTrail(row.mission_efforts)}</div>
   </div>`).join("");
 
   const you = performance.you;
@@ -1323,10 +1353,10 @@ function renderControls() {
   const deploy = $("deploy-btn");
   deploy.disabled = state.busy || !state.selectedSite || !canSpend(state.selectedEffort) || done;
   deploy.querySelector("b").textContent = done
-    ? "Response window complete"
+    ? "Field budget allocated"
     : `Deploy Site ${state.selectedSite || "—"} · e${state.selectedEffort}`;
   deploy.querySelector("small").textContent = done
-    ? `${state.data.resources.capacity_preserved} effort units remain preserved`
+    ? "Reveal the hidden extent to evaluate the response"
     : "Survey → field return → Bayes update → replan";
 
   $("reset-btn").disabled = state.busy;
@@ -1606,9 +1636,6 @@ function endDrag(event) {
 }
 $("graph").addEventListener("pointerup", endDrag);
 $("graph").addEventListener("pointercancel", endDrag);
-
-$("minutes-per-unit").addEventListener("input", renderConversion);
-$("cost-per-unit").addEventListener("input", renderConversion);
 
 $("deploy-btn").addEventListener("click", deploy);
 $("reveal-btn").addEventListener("click", reveal);

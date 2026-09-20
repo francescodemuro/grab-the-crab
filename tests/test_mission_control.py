@@ -271,7 +271,17 @@ def test_reveal_scores_marine_static_and_human_against_same_hidden_incident() ->
         row = performance[name]
         assert row["detected_occupied"] + row["undetected_occupied"] == row["occupied_total"]
         assert row["curve"][0]["effort"] == 0
-        assert row["missions_completed"] == 3
+        assert row["effort_spent"] == 18
+        # Static always precommits 3 x e6 = 18. "You" in this test always
+        # forces the largest affordable effort, which also spends 18 in
+        # exactly 3 missions. Marine's own comparator now genuinely varies
+        # effort by belief (PROBE -> DELIMIT -> CONFIRM), so its mission
+        # count is no longer pinned to 3 - only bounded by the budget/effort
+        # contract (at least 3, at most 18 windows of >=1 unit each).
+        if name in ("static", "you"):
+            assert row["missions_completed"] == 3
+        else:
+            assert 3 <= row["missions_completed"] <= 18
         assert 0 < row["curve"][-1]["effort"] <= 18
         assert 0.0 <= row["curve"][-1]["detected_fraction"] <= 1.0
 
@@ -407,7 +417,7 @@ def test_dashboard_defaults_to_frozen_hero_case_and_exposes_real_map_metadata() 
     session = MissionControlSession()
     snap = session.snapshot()
 
-    assert snap["case"]["case_id"] == "incident_097"
+    assert snap["case"]["case_id"] == "incident_079"
     assert len(snap["static_response"]["plan_sites"]) == 3
     assert snap["incident"]["initial_detection"] not in set(
         snap["static_response"]["plan_sites"]
@@ -456,6 +466,28 @@ def test_resource_aware_recommendation_exposes_site_and_effort_diagnostics() -> 
     assert diag["occupancy_band"] in {"exploratory", "delimitation", "confirmation"}
     assert 0.0 <= diag["occupancy_belief"] <= 1.0
     assert diag["rule"] == "probe_delimit_confirm"
+
+
+def test_all_three_effort_levels_are_genuinely_reachable_actions() -> None:
+    """Regression guard for the R11 bug where every recommendation converged
+    on e6 regardless of belief (the old rule's fixed detection-power
+    retention threshold structurally excluded e1). Uses the frozen default
+    demo case (deterministic, real audited trajectory: confirmation -> e6,
+    delimitation -> e3, exploratory -> e1) rather than a synthetic scenario,
+    so this also pins the exact case the live demo relies on."""
+    session = MissionControlSession()
+    snap = session.snapshot()  # defaults to the frozen demo case
+
+    seen_bands: dict[str, int] = {}
+    while not snap["can_reveal"]:
+        rec = snap["global_recommendations"][0]
+        diag = rec["effort_recommendation"]
+        seen_bands[diag["occupancy_band"]] = int(diag["recommended_effort"])
+        snap = session.deploy(site_id=rec["site_id"], effort=int(diag["recommended_effort"]))
+
+    assert seen_bands.get("confirmation") == 6
+    assert seen_bands.get("delimitation") == 3
+    assert seen_bands.get("exploratory") == 1
 
 
 def test_q_boundary_pressure_is_separate_from_model_stress() -> None:

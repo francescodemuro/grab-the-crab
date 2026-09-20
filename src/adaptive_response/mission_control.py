@@ -67,7 +67,7 @@ _TOP_WORLDS = 5
 _SEED_MODULUS = 1_000_000
 _BELIEF_SEED_NAMESPACE_OFFSET = 10_000_000_000
 _CASE_OUTCOME_VERSION = "ui-v1"
-_DEFAULT_DEMO_CASE_ID = "incident_097"
+_DEFAULT_DEMO_CASE_ID = "incident_079"
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _CASE_MANIFEST = _REPO_ROOT / "configs" / "ui_case_manifest_v1.json"
@@ -184,11 +184,16 @@ class MissionControlFrontierPlanner:
     """Product planner: Frontier site ranking + Bayesian resource-aware effort.
 
     Site selection deliberately preserves the benchmark-supported Frontier ordering.
-    The new product layer optimizes *how much* effort to spend at the selected site
-    using only the observable joint spatial/q posterior. For each allowed effort it
-    computes exact expected reduction in marginal occupancy entropy plus conditional
-    detection power under the q posterior, then chooses the smallest effort retaining
-    at least 60% of the maximum-effort value on both dimensions.
+    The product layer optimizes *how much* effort to spend at the selected site
+    using only the observable joint spatial/q posterior, with a distinct rule per
+    occupancy-belief band (PROBE -> DELIMIT -> CONFIRM; see `recommend_effort`):
+
+    - exploratory (low belief): the cheapest, highest-information-per-effort
+      probe, tie-broken toward the smaller effort;
+    - delimitation (medium belief): the smallest effort that still retains most
+      of the information gain and conditional detection power a full-effort
+      survey would give, otherwise full effort;
+    - confirmation (high belief): the largest feasible effort outright.
 
     This is a transparent DESIGN CHOICE for the resource-efficiency demo.
     It is not an ecological constant and it does not use hidden truth.
@@ -1019,10 +1024,10 @@ class MissionControlSession:
                 {
                     "kind": "complete",
                     "round": transition.observations.round,
-                    "title": "Response window complete",
+                    "title": "Field-response budget allocated",
                     "detail": (
-                        "Three field deployments are complete. Any unspent effort "
-                        "remains preserved capacity; reveal is now available."
+                        "The 18-unit response budget has been allocated. Hidden "
+                        "extent can now be revealed for evaluation."
                     ),
                 }
             )

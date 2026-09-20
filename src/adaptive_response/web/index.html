@@ -64,7 +64,7 @@
         <strong id="case-number">—</strong>
       </div>
       <div class="status-item">
-        <small>Response window</small>
+        <small>Response mission</small>
         <strong id="round">—</strong>
       </div>
       <div class="status-item budget-status">
@@ -107,7 +107,7 @@
           <div class="recommendation-metrics">
             <div><small>Occupancy belief</small><b id="marine-belief">—</b></div>
             <div><small>Predicted detection</small><b id="marine-pdetect">—</b></div>
-            <div><small>Capacity preserved</small><b id="marine-saved">—</b></div>
+            <div><small>Capacity after mission</small><b id="marine-saved">—</b></div>
           </div>
           <p id="marine-copy">Recommendation is computed from observable belief only.</p>
         </div>
@@ -309,14 +309,14 @@
         <div class="ramp-heading">
           <span class="sponsor-pill">FIELD CAPACITY</span>
           <div>
-            <h2>Save field capacity</h2>
-            <p>Every mission spends field capacity. Lower effort now leaves more capacity for additional searches later; higher effort spends more of the budget for stronger detection power at the current site.</p>
+            <h2>Allocate field capacity</h2>
+            <p>Lower effort leaves more capacity for additional searches; higher effort buys stronger detection power at the current site.</p>
           </div>
         </div>
 
         <div class="ramp-primary">
           <div>
-            <small>Capacity preserved</small>
+            <small>Capacity remaining</small>
             <strong id="resource-left">—</strong>
             <span>effort units</span>
           </div>
@@ -325,21 +325,9 @@
 
         <div class="ramp-kpis">
           <div><small>Effort spent</small><b id="resource-spent">—</b></div>
-          <div><small>Deployments</small><b id="resource-missions">—</b></div>
-          <div><small>Avoided vs e6*</small><b id="resource-avoided">—</b></div>
+          <div><small>Missions completed</small><b id="resource-missions">—</b></div>
+          <div><small>Next recommended effort</small><b id="resource-avoided">—</b></div>
         </div>
-
-        <details class="conversion-panel">
-          <summary>Translate saved effort into local time / cost</summary>
-          <p>Optional operator inputs. No universal dollar or time conversion is assumed.</p>
-          <div class="conversion-grid">
-            <label><span>Minutes per effort unit</span><input id="minutes-per-unit" type="number" min="0" step="1" placeholder="e.g. 20" /></label>
-            <label><span>$ per effort unit</span><input id="cost-per-unit" type="number" min="0" step="1" placeholder="e.g. 25" /></label>
-          </div>
-          <div id="conversion-output" class="conversion-output">Enter local rates to estimate operational savings.</div>
-        </details>
-
-        <p class="footnote">*Compared with effort 6 for the same number of completed deployments. Formal R8/R10 benchmarks remain separate.</p>
       </aside>
 
       <section class="card why-card">
