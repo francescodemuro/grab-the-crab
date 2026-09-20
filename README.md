@@ -219,14 +219,17 @@ Pablo originated and developed the core project direction from the early concept
 On the technical side, Pablo worked on the mathematical and probabilistic backbone of the system. He developed the Bayesian belief layer that represents multiple possible invasion extents together with uncertain detectability, and made field evidence effort-aware through `P(no detection | occupied, effort=e) = (1-q)^e`. This means a weak non-detection and a strong non-detection are mathematically different observations rather than both being treated as “absence.” The backend exposes posterior occupancy probabilities, uncertainty and detectability belief to the planner while keeping the realized hidden world structurally separate, and connects that inference state to the simulator, real monitoring context and planner-facing graph state.
 Pablo also led much of the product integration and UI refinement, turning the mathematical state into an interactive mission-control experience where judges can inspect belief, uncertainty, probable worlds and resource use — and visibly watch **field evidence → belief change → mission change**.
 
+**Federico — system architecture, backend/modeling, product/UI, and overall project direction.**
+Federico worked across the core architecture of Grab the Crab, helping define how the simulator, probabilistic Bayesian belief state, observation model, planner interface and real monitoring context fit together into a single adaptive decision system. His work covered the modeling of possible invasion worlds, uncertainty and detectability, effort-aware evidence, the separation between hidden ground truth and planner-visible state, and the broader logic connecting ecological spread, field observations and sequential mission planning. He also helped shape the ecological and operational framing of the system so that the technical design remained tied to a realistic post-detection response workflow.
+
+He also worked extensively on the product and UI, translating the backend into an interactive mission-control experience built around maps, uncertainty, possible worlds, resource choices, recommended actions and visible replanning after new evidence. Beyond individual components, Federico had a broad project-direction role throughout the hackathon: reviewing and challenging design choices, making cross-cutting decisions on what to build and prioritize, shaping evaluation and baseline strategy, and keeping the backend, UI, demo and pitch aligned around one coherent product. He also led much of the ecological framing, demo narrative and presentation structure used to communicate the system to judges.
+
 
 **Francesco Demuro, Learning and Evaluation Stack.**
 
 Single-handedly architected the entire learning and evaluation stack: the GNN actor-critic backbone and the joint (site, effort) policy, three independently-seeded training pipelines with full checkpointing for reproducibility, and the frozen R7/R8 benchmark protocol with statistically rigorous paired-bootstrap comparison tooling — including catching and fixing a subtle seed-leakage bug that had silently let the model see the answer, invalidating an entire earlier benchmark run before anyone noticed. Then, in the final push before submission, he designed and shipped the effort-aware RAMP planner end to end: a full calibration audit, a dual-population tuning process that caught and corrected an overfit configuration before it ever shipped, the statistical win-rate and confidence analysis behind the headline +4.67% relative detection improvement (98% bootstrap confidence), and the complete economic and time-savings translation — $1.28M and 164 volunteer field-days saved per year — grounded in real Washington State budget and monitoring-program data.
 
 
-
-Federico — ecological response logic: frontier delimitation strategy, species/habitat framing, demo narrative.
 
 ---
 
