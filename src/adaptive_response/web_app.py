@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from .mission_control import MissionControlSession
 
 WEB_DIR = Path(__file__).with_name("web")
-app = FastAPI(title="Marine Interactive Mission Control")
+app = FastAPI(title="Grab the Crab — Adaptive First-Response Mission Control")
 session = MissionControlSession()
 app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
 
