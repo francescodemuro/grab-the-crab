@@ -3,9 +3,9 @@ requires = ["setuptools>=69"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "adaptive-first-response"
+name = "grab-the-crab"
 version = "0.1.0"
-description = "HackMIT rehearsal implementation for adaptive ecological first-response planning."
+description = "Grab the Crab: adaptive first-response mission control for marine invasive species."
 requires-python = ">=3.11,<3.12"
 dependencies = [
   "numpy>=2.0,<3",
