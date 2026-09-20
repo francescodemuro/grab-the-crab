@@ -453,11 +453,9 @@ def test_resource_aware_recommendation_exposes_site_and_effort_diagnostics() -> 
     assert top["recommended_effort"] in (1, 3, 6)
     diag = top["effort_recommendation"]
     assert diag["recommended_effort"] == top["recommended_effort"]
-    assert diag["occupancy_band"] in {"exploratory", "medium", "high"}
+    assert diag["occupancy_band"] in {"exploratory", "delimitation", "confirmation"}
     assert 0.0 <= diag["occupancy_belief"] <= 1.0
-    assert 0.0 < diag["information_retention_required"] <= 1.0
-    assert 0.0 < diag["detection_power_retention_required"] <= 1.0
-    assert diag["rule"] == "occupancy_aware_smallest_effort_retaining_information_and_detection_power"
+    assert diag["rule"] == "probe_delimit_confirm"
 
 
 def test_q_boundary_pressure_is_separate_from_model_stress() -> None:

@@ -49,10 +49,16 @@ _EFFORT_LEVELS = (1, 3, 6)
 # This is NOT a target number of deployments - a policy choosing smaller
 # efforts legitimately runs more windows before the budget is exhausted.
 _MAX_RESPONSE_WINDOWS = 18
-_EFFORT_INFORMATION_RETENTION = 0.65
+# Delimitation-band thresholds only. Empirically, e3's information-gain
+# retention in this belief model consistently lands around 0.55 (never
+# ~0.65) whenever e3 clears the 0.55 detection-power bar - so a 0.65 info
+# floor reproduced the exact same structural exclusion this rule was
+# written to fix (e1 was excluded from exploratory before this change; e3
+# was excluded from delimitation at this threshold). 0.50 leaves headroom
+# below the observed range while still requiring e3 to capture most of the
+# information a full-effort survey would.
+_EFFORT_INFORMATION_RETENTION = 0.50
 _EFFORT_DETECTION_RETENTION_LOW = 0.55
-_EFFORT_DETECTION_RETENTION_MEDIUM = 0.68
-_EFFORT_DETECTION_RETENTION_HIGH = 0.82
 _EFFORT_MEDIUM_OCCUPANCY = 0.25
 _EFFORT_HIGH_OCCUPANCY = 0.55
 _TOP_PROPAGATED_CHANGES = 5
@@ -338,26 +344,49 @@ class MissionControlFrontierPlanner:
             raise ValueError("No allowed effort level fits remaining budget.")
 
         occupancy_belief = float(spatial.p_by_site()[site_id])
-        if occupancy_belief >= _EFFORT_HIGH_OCCUPANCY:
-            detection_retention_required = _EFFORT_DETECTION_RETENTION_HIGH
-            occupancy_band = "high"
-        elif occupancy_belief >= _EFFORT_MEDIUM_OCCUPANCY:
-            detection_retention_required = _EFFORT_DETECTION_RETENTION_MEDIUM
-            occupancy_band = "medium"
-        else:
-            detection_retention_required = _EFFORT_DETECTION_RETENTION_LOW
-            occupancy_band = "exploratory"
-
-        chosen = options[-1]
-        for row in options:
-            if (
-                float(row["information_retention"]) >= _EFFORT_INFORMATION_RETENTION
-                and float(row["detection_power_retention"]) >= detection_retention_required
-            ):
-                chosen = row
-                break
-
         max_effort = int(options[-1]["effort"])
+
+        # PROBE -> DELIMIT -> CONFIRM (product decision rule, not an
+        # ecological constant): at low belief a fixed high-retention
+        # threshold structurally excludes e1 (e1/e6 conditional-detection
+        # retention is only ~19-27% across the belief q support), so every
+        # site converged on the largest feasible effort regardless of belief.
+        # Each band now has its own, distinct decision rule instead of one
+        # shared "smallest effort clearing a retention bar" rule applied at
+        # three thresholds.
+        if occupancy_belief >= _EFFORT_HIGH_OCCUPANCY:
+            # Confirmation: the site is already strongly suspected - buy
+            # detection power outright with the largest feasible effort.
+            occupancy_band = "confirmation"
+            chosen = options[-1]
+        elif occupancy_belief >= _EFFORT_MEDIUM_OCCUPANCY:
+            # Delimitation: spend the smallest effort that still keeps most
+            # of the information gain and conditional detection power a
+            # full-effort survey would give; otherwise spend full effort.
+            occupancy_band = "delimitation"
+            chosen = options[-1]
+            for row in options:
+                if (
+                    float(row["information_retention"]) >= _EFFORT_INFORMATION_RETENTION
+                    and float(row["detection_power_retention"]) >= _EFFORT_DETECTION_RETENTION_LOW
+                ):
+                    chosen = row
+                    break
+        else:
+            # Exploratory: cheaply probe the frontier. Maximize information
+            # gain per effort unit (not a retention-vs-max-effort ratio), so
+            # e1 can win outright when it is the most efficient probe;
+            # ties are broken toward the smaller effort to preserve field
+            # capacity for another branch.
+            occupancy_band = "exploratory"
+            chosen = max(
+                options,
+                key=lambda row: (
+                    float(row["information_gain_per_effort"]),
+                    -float(row["effort"]),
+                ),
+            )
+
         chosen_effort = int(chosen["effort"])
         return {
             **chosen,
@@ -366,15 +395,17 @@ class MissionControlFrontierPlanner:
             "max_feasible_effort": max_effort,
             "occupancy_belief": occupancy_belief,
             "occupancy_band": occupancy_band,
-            "information_retention_required": _EFFORT_INFORMATION_RETENTION,
-            "detection_power_retention_required": detection_retention_required,
             "options": [dict(row) for row in options],
-            "rule": "occupancy_aware_smallest_effort_retaining_information_and_detection_power",
+            "rule": "probe_delimit_confirm",
             "design_note": (
-                "Exploratory low-belief sites accept a larger reduction in conditional "
-                "detection power to preserve field capacity; high-belief sites require "
-                "much stronger detection-power retention. Thresholds are product design "
-                "choices for the resource-efficiency demo, not ecological constants."
+                "Exploratory (low belief): cheapest highest-information-per-effort "
+                "probe, tied toward the smaller effort, to preserve field capacity "
+                "for other branches. Delimitation (medium belief): smallest effort "
+                "that keeps most of the information gain and conditional detection "
+                "power a full-effort survey would give, otherwise full effort. "
+                "Confirmation (high belief): buy detection power outright with the "
+                "largest feasible effort. Thresholds are product design choices for "
+                "the resource-efficiency demo, not ecological constants."
             ),
         }
 

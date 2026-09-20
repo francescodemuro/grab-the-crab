@@ -353,8 +353,14 @@ function renderWhyMission() {
 
   $("why-effort-value").textContent = recommendedEffort ? `e${recommendedEffort}` : "—";
   const effortDiag = rec?.effort_recommendation ?? node.effort_recommendation;
+  const EFFORT_BAND_COPY = {
+    exploratory: "Exploratory: cheapest probe with the best information gain per effort unit, tied toward the smaller effort to preserve field capacity elsewhere.",
+    delimitation: "Delimitation: smallest effort that still keeps most of the information gain and detection power a full-effort survey would give.",
+    confirmation: "Confirmation: this site is already strongly suspected, so effort buys detection power outright at the largest feasible level.",
+  };
   if (effortDiag) {
-    $("why-effort-copy").textContent = `Occupancy band: ${effortDiag.occupancy_band}. The planner chooses the smallest effort retaining at least ${fmtPct(effortDiag.information_retention_required)} of max-effort information value and ${fmtPct(effortDiag.detection_power_retention_required)} of max-effort detection power for this occupancy band. This is a transparent product rule, not an ecological constant.`;
+    const bandCopy = EFFORT_BAND_COPY[effortDiag.occupancy_band] || "";
+    $("why-effort-copy").textContent = `Occupancy band: ${effortDiag.occupancy_band}. ${bandCopy} This is a transparent product rule, not an ecological constant.`;
   } else {
     $("why-effort-copy").textContent = "No effort recommendation after campaign completion.";
   }
