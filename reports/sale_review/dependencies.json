@@ -1,0 +1,279 @@
+{
+  "scope": "pinned_python312_core_ui",
+  "source": "installed_distribution_metadata",
+  "rights_clearance": false,
+  "components": [
+    {
+      "name": "annotated-doc",
+      "version": "0.0.5",
+      "license_metadata": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "project_urls": [
+        "Homepage, https://github.com/fastapi/annotated-doc",
+        "Documentation, https://github.com/fastapi/annotated-doc",
+        "Repository, https://github.com/fastapi/annotated-doc",
+        "Issues, https://github.com/fastapi/annotated-doc/issues",
+        "Changelog, https://github.com/fastapi/annotated-doc/release-notes.md"
+      ]
+    },
+    {
+      "name": "annotated-types",
+      "version": "0.8.0",
+      "license_metadata": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "project_urls": [
+        "Homepage, https://github.com/annotated-types/annotated-types",
+        "Source, https://github.com/annotated-types/annotated-types",
+        "Changelog, https://github.com/annotated-types/annotated-types/releases"
+      ]
+    },
+    {
+      "name": "anyio",
+      "version": "4.15.1",
+      "license_metadata": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "project_urls": [
+        "Documentation, https://anyio.readthedocs.io/en/latest/",
+        "Changelog, https://anyio.readthedocs.io/en/stable/versionhistory.html",
+        "Source code, https://github.com/agronholm/anyio",
+        "Issue tracker, https://github.com/agronholm/anyio/issues"
+      ]
+    },
+    {
+      "name": "certifi",
+      "version": "2026.7.22",
+      "license_metadata": "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+      "license_files": [
+        "LICENSE"
+      ],
+      "project_urls": [
+        "Source, https://github.com/certifi/python-certifi"
+      ]
+    },
+    {
+      "name": "click",
+      "version": "8.5.0",
+      "license_metadata": "BSD-3-Clause",
+      "license_files": [
+        "LICENSE.txt"
+      ],
+      "project_urls": [
+        "Changes, https://click.palletsprojects.com/page/changes/",
+        "Chat, https://discord.gg/pallets",
+        "Documentation, https://click.palletsprojects.com/",
+        "Donate, https://palletsprojects.com/donate",
+        "Source, https://github.com/pallets/click/"
+      ]
+    },
+    {
+      "name": "fastapi",
+      "version": "0.142.2",
+      "license_metadata": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "project_urls": [
+        "Homepage, https://github.com/fastapi/fastapi",
+        "Documentation, https://fastapi.tiangolo.com/",
+        "Repository, https://github.com/fastapi/fastapi",
+        "Issues, https://github.com/fastapi/fastapi/issues",
+        "Changelog, https://fastapi.tiangolo.com/release-notes/"
+      ]
+    },
+    {
+      "name": "h11",
+      "version": "0.16.0",
+      "license_metadata": "License :: OSI Approved :: MIT License",
+      "license_files": [
+        "LICENSE.txt"
+      ],
+      "project_urls": []
+    },
+    {
+      "name": "httpcore",
+      "version": "1.0.9",
+      "license_metadata": "BSD-3-Clause",
+      "license_files": [
+        "LICENSE.md"
+      ],
+      "project_urls": [
+        "Documentation, https://www.encode.io/httpcore",
+        "Homepage, https://www.encode.io/httpcore/",
+        "Source, https://github.com/encode/httpcore"
+      ]
+    },
+    {
+      "name": "httpx",
+      "version": "0.28.1",
+      "license_metadata": "License :: OSI Approved :: BSD License",
+      "license_files": [],
+      "project_urls": [
+        "Changelog, https://github.com/encode/httpx/blob/master/CHANGELOG.md",
+        "Documentation, https://www.python-httpx.org",
+        "Homepage, https://github.com/encode/httpx",
+        "Source, https://github.com/encode/httpx"
+      ]
+    },
+    {
+      "name": "idna",
+      "version": "3.19",
+      "license_metadata": "BSD-3-Clause",
+      "license_files": [
+        "LICENSE.md"
+      ],
+      "project_urls": [
+        "Changelog, https://github.com/kjd/idna/blob/master/HISTORY.md",
+        "Issue tracker, https://github.com/kjd/idna/issues",
+        "Source, https://github.com/kjd/idna"
+      ]
+    },
+    {
+      "name": "networkx",
+      "version": "3.7",
+      "license_metadata": "BSD-3-Clause",
+      "license_files": [
+        "LICENSE.txt"
+      ],
+      "project_urls": [
+        "Homepage, https://networkx.org/",
+        "Bug Tracker, https://github.com/networkx/networkx/issues",
+        "Documentation, https://networkx.org/documentation/stable/",
+        "Source Code, https://github.com/networkx/networkx"
+      ]
+    },
+    {
+      "name": "numpy",
+      "version": "2.3.5",
+      "license_metadata": "License :: OSI Approved :: BSD License",
+      "license_files": [],
+      "project_urls": [
+        "homepage, https://numpy.org",
+        "documentation, https://numpy.org/doc/",
+        "source, https://github.com/numpy/numpy",
+        "download, https://pypi.org/project/numpy/#files",
+        "tracker, https://github.com/numpy/numpy/issues",
+        "release notes, https://numpy.org/doc/stable/release"
+      ]
+    },
+    {
+      "name": "opentelemetry-api",
+      "version": "1.45.0",
+      "license_metadata": "Apache-2.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "project_urls": [
+        "Homepage, https://github.com/open-telemetry/opentelemetry-python/tree/main/opentelemetry-api",
+        "Repository, https://github.com/open-telemetry/opentelemetry-python"
+      ]
+    },
+    {
+      "name": "pydantic",
+      "version": "2.13.5",
+      "license_metadata": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "project_urls": [
+        "Homepage, https://github.com/pydantic/pydantic",
+        "Documentation, https://docs.pydantic.dev",
+        "Funding, https://github.com/sponsors/samuelcolvin",
+        "Source, https://github.com/pydantic/pydantic",
+        "Changelog, https://docs.pydantic.dev/latest/changelog/"
+      ]
+    },
+    {
+      "name": "pydantic_core",
+      "version": "2.46.5",
+      "license_metadata": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "project_urls": [
+        "Funding, https://github.com/sponsors/samuelcolvin",
+        "Homepage, https://github.com/pydantic",
+        "Source, https://github.com/pydantic/pydantic/tree/main/pydantic-core"
+      ]
+    },
+    {
+      "name": "PyYAML",
+      "version": "6.0.3",
+      "license_metadata": "License :: OSI Approved :: MIT License",
+      "license_files": [
+        "LICENSE"
+      ],
+      "project_urls": [
+        "Bug Tracker, https://github.com/yaml/pyyaml/issues",
+        "CI, https://github.com/yaml/pyyaml/actions",
+        "Documentation, https://pyyaml.org/wiki/PyYAMLDocumentation",
+        "Mailing lists, http://lists.sourceforge.net/lists/listinfo/yaml-core",
+        "Source Code, https://github.com/yaml/pyyaml"
+      ]
+    },
+    {
+      "name": "starlette",
+      "version": "1.7.0",
+      "license_metadata": "BSD-3-Clause",
+      "license_files": [
+        "LICENSE.md"
+      ],
+      "project_urls": [
+        "Homepage, https://github.com/Kludex/starlette",
+        "Documentation, https://starlette.dev/",
+        "Changelog, https://starlette.dev/release-notes/",
+        "Funding, https://github.com/sponsors/Kludex",
+        "Source, https://github.com/Kludex/starlette"
+      ]
+    },
+    {
+      "name": "typing-inspection",
+      "version": "0.4.4",
+      "license_metadata": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "project_urls": [
+        "Homepage, https://github.com/pydantic/typing-inspection",
+        "Documentation, https://pydantic.github.io/typing-inspection/dev/",
+        "Source, https://github.com/pydantic/typing-inspection",
+        "Changelog, https://github.com/pydantic/typing-inspection/blob/main/HISTORY.md"
+      ]
+    },
+    {
+      "name": "typing_extensions",
+      "version": "4.16.0",
+      "license_metadata": "PSF-2.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "project_urls": [
+        "Bug Tracker, https://github.com/python/typing_extensions/issues",
+        "Changes, https://github.com/python/typing_extensions/blob/main/CHANGELOG.md",
+        "Documentation, https://typing-extensions.readthedocs.io/",
+        "Home, https://github.com/python/typing_extensions",
+        "Q & A, https://github.com/python/typing/discussions",
+        "Repository, https://github.com/python/typing_extensions"
+      ]
+    },
+    {
+      "name": "uvicorn",
+      "version": "0.54.0",
+      "license_metadata": "BSD-3-Clause",
+      "license_files": [
+        "LICENSE.md"
+      ],
+      "project_urls": [
+        "Changelog, https://uvicorn.dev/release-notes",
+        "Funding, https://github.com/sponsors/Kludex",
+        "Homepage, https://uvicorn.dev/",
+        "Source, https://github.com/Kludex/uvicorn"
+      ]
+    }
+  ]
+}

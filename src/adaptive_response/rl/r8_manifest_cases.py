@@ -15,6 +15,7 @@ from ..world_models import (
     sample_ecological_hypotheses,
 )
 from ..spatial_belief import QHypothesis
+from ..resources import asset_path
 from .real_graph_cases import build_real_incident_case
 from .spatial_benchmark import SpatialBenchmarkCase
 
@@ -24,7 +25,7 @@ from .spatial_benchmark import SpatialBenchmarkCase
 # benchmark "exact frozen cases," not a re-sample.
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-FROZEN_MANIFEST_PATH = REPO_ROOT / "reports" / "milestones" / "r8_benchmark_case_manifest" / "benchmark_cases.json"
+FROZEN_MANIFEST_PATH = asset_path("benchmark_cases.json")
 
 FAMILY_MODELS: dict[str, WorldModel] = {
     "A_graph_diffusion": GraphDiffusionWorldModel(),

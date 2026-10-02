@@ -4,9 +4,27 @@ Requires torch; skipped entirely otherwise, same as the other rl/ test modules.
 """
 
 import numpy as np
+import pickle
 import pytest
 
 torch = pytest.importorskip("torch")
+
+
+class _UnsafeMetadata:
+    def __init__(self, target):
+        self.target = target
+
+    def __reduce__(self):
+        return eval, (f"__import__('pathlib').Path({str(self.target)!r}).touch()",)
+
+
+def test_checkpoint_loader_rejects_executable_pickle_metadata(tmp_path):
+    marker = tmp_path / "must-not-exist"
+    checkpoint = tmp_path / "unsafe.pt"
+    torch.save({"extra": _UnsafeMetadata(marker)}, checkpoint)
+    with pytest.raises(pickle.UnpicklingError):
+        load_policy_checkpoint(checkpoint)
+    assert not marker.exists()
 
 from adaptive_response.rl import (  # noqa: E402
     GNNActorCritic,

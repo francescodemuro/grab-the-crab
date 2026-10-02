@@ -4,9 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "grab-the-crab"
-version = "0.1.0"
+version = "0.2.0"
 description = "Grab the Crab: adaptive first-response mission control for marine invasive species."
-requires-python = ">=3.11,<3.12"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
 dependencies = [
   "numpy>=2.0,<3",
   "networkx>=3.2,<4",
@@ -16,13 +17,14 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "pytest>=8,<10",
+  "build>=1.2,<2",
 ]
 # GNN/RL backbone (Demu's learned-planner block). Deliberately kept out of the
 # core `dependencies` list: the environment/Bayes/UI side of the project must
 # never need torch installed just to run. Only `adaptive_response.rl` imports
 # it. Install with `pip install -e ".[dev,rl]"`.
 rl = [
-  "torch>=2.2,<3",
+  "torch>=2.6,<3",
 ]
 # Mission Control web shell (src/adaptive_response/web_app.py, mission_control.py).
 # Also kept out of core `dependencies` for the same reason as `rl`: importing
@@ -44,6 +46,16 @@ llm = [
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+adaptive_response = ["web/*.html", "web/*.js", "web/*.css", "web/*.svg", "assets/*.json", "assets/*.csv", "assets/*.md"]
+
+[project.scripts]
+grab-the-crab = "adaptive_response.cli:main"
+
+[project.urls]
+Repository = "https://github.com/francescodemuro/grab-the-crab"
+Documentation = "https://github.com/francescodemuro/grab-the-crab/tree/main/docs"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

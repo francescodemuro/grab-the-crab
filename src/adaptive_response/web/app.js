@@ -6,6 +6,7 @@ const state = {
   selectedEffort: 6,
   layer: "belief",
   busy: false,
+  onlineImagery: false,
   mapZoom: 0,
   mapPanX: 0,
   mapPanY: 0,
@@ -36,7 +37,12 @@ async function api(path, method = "GET", body = null) {
   }
   const response = await fetch(path, options);
   const payload = await response.json();
-  if (!response.ok) throw new Error(payload.detail || "Request failed");
+  if (!response.ok) {
+    const detail = Array.isArray(payload.detail)
+      ? payload.detail.map((item) => item.msg).join(" ")
+      : payload.detail;
+    throw new Error(detail || "Request failed");
+  }
   return payload;
 }
 
@@ -632,6 +638,18 @@ function chooseMapProjection(nodes, width, height) {
 function appendMapTiles(root, projection, width, height) {
   root.appendChild(svgEl("rect", { x: 0, y: 0, width, height, class: "map-fallback-water" }));
   if (!projection) return;
+  $("map-attribution").textContent = state.onlineImagery
+    ? "Imagery © Esri · fallback © OpenStreetMap contributors · external tile requests enabled"
+    : "Real monitoring coordinates · offline geographic network · no basemap imagery";
+  if (!state.onlineImagery) {
+    for (let x = 0; x < width; x += 110) {
+      root.appendChild(svgEl("line", { x1: x, x2: x, y1: 0, y2: height, class: "offline-map-grid" }));
+    }
+    for (let y = 0; y < height; y += 80) {
+      root.appendChild(svgEl("line", { x1: 0, x2: width, y1: y, y2: y, class: "offline-map-grid" }));
+    }
+    return;
+  }
 
   const size = 256;
   const z = projection.zoom;
@@ -1402,7 +1420,7 @@ async function deploy() {
   try {
     setBusy(true);
     showTransition(
-      "FIELD TEAM ACTIVE",
+      "SIMULATED SURVEY",
       `Surveying Site ${state.selectedSite}`,
       `Effort ${state.selectedEffort}. Hidden truth remains locked.`
     );
@@ -1410,6 +1428,7 @@ async function deploy() {
     const data = await api("/api/deploy", "POST", {
       site_id: state.selectedSite,
       effort: state.selectedEffort,
+      expected_round: before.resources.round,
     });
 
     const obs = data.last_round?.observations?.[0];
@@ -1557,6 +1576,11 @@ $("layer-select").addEventListener("change", () => {
   state.layer = id;
   state.selectedWorld = null;
   render(state.data);
+});
+
+$("online-map-toggle").addEventListener("change", () => {
+  state.onlineImagery = $("online-map-toggle").checked;
+  if (state.data) renderMap(state.data);
 });
 
 $("zoom-in").addEventListener("click", () => {

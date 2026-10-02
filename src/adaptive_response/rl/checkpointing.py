@@ -126,9 +126,13 @@ def load_policy_checkpoint(
     only kind that could have been saved at that time, so this is a correct
     default, not a guess. Raises `ValueError` on a checkpoint written by an
     incompatible/unknown format rather than silently misloading it.
+
+    Uses PyTorch's restricted weights-only loader. Metadata must use tensors
+    and plain serializable values, not arbitrary Python objects. No automatic
+    unsafe-pickle fallback is allowed for legacy or third-party checkpoints.
     """
 
-    payload = torch.load(Path(path), map_location=map_location, weights_only=False)
+    payload = torch.load(Path(path), map_location=map_location, weights_only=True)
     if not isinstance(payload, dict) or "format_version" not in payload:
         raise ValueError(
             f"{path} does not look like a checkpoint written by "
@@ -165,7 +169,7 @@ def load_optimizer_state(
     training (as opposed to inference-only loading via `load_policy_checkpoint`).
     """
 
-    payload = torch.load(Path(path), map_location=map_location, weights_only=False)
+    payload = torch.load(Path(path), map_location=map_location, weights_only=True)
     if "optimizer_state_dict" not in payload:
         raise ValueError(f"{path} was saved without optimizer state.")
     optimizer.load_state_dict(payload["optimizer_state_dict"])

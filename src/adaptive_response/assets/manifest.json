@@ -1,0 +1,17 @@
+{
+  "baseline_commit": "9712c241fb5f3f7f3806fda84617ec2c7a2aeb76",
+  "sources": {
+    "ui_case_manifest_v1.json": "configs/ui_case_manifest_v1.json",
+    "real_site_context_r8.json": "configs/real_site_context_r8.json",
+    "real_sites_v0.csv": "reports/milestones/r2_real_graph_v0/real_sites_v0.csv",
+    "real_graph_v0_edges.csv": "reports/milestones/r2_real_graph_v0/real_graph_v0_edges.csv",
+    "benchmark_cases.json": "reports/milestones/r8_benchmark_case_manifest/benchmark_cases.json"
+  },
+  "sha256": {
+    "ui_case_manifest_v1.json": "a37294aedc887e1a92aa10bf016a14cbce21ce5cea8df4bd951784b7ef24a058",
+    "real_site_context_r8.json": "05c00b0e9852d330b24a6b66184523c29652ae53bfcd29edd33725f483707b6c",
+    "real_sites_v0.csv": "45144f2da2bac4d8f5a2e96493bf3654cd2fe815eba5e7161c4dc4257fce3483",
+    "real_graph_v0_edges.csv": "995841419de6e9b73840f99b100d68d03dcaaa3d2877cb6cb07110dcde4badac",
+    "benchmark_cases.json": "d50a038caff12da2a199bcafa341188281a1b245a27de5700ea0f43ad19a1b6c"
+  }
+}
