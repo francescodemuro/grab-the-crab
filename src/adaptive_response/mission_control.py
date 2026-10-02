@@ -22,6 +22,7 @@ from .models import (
     ObservationBatch,
 )
 from .planners import FrontierPlanner, Planner
+from .resources import asset_path
 from .real_incident_source import (
     build_real_incident,
     eligible_incident_seed_sites,
@@ -70,7 +71,7 @@ _CASE_OUTCOME_VERSION = "ui-v1"
 _DEFAULT_DEMO_CASE_ID = "incident_079"
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_CASE_MANIFEST = _REPO_ROOT / "configs" / "ui_case_manifest_v1.json"
+_CASE_MANIFEST = asset_path("ui_case_manifest_v1.json")
 
 
 def _derive_belief_seed(case_id: str, world_seed: int) -> int:

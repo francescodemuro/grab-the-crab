@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "software_version": "0.2.0",
+  "audit_type": "descriptive_simulation_product_audit",
+  "scope": "all_frozen_ui_cases",
+  "case_count": 100,
+  "available_case_count": 100,
+  "asset_sha256": {
+    "ui_case_manifest_v1.json": "a37294aedc887e1a92aa10bf016a14cbce21ce5cea8df4bd951784b7ef24a058",
+    "real_site_context_r8.json": "05c00b0e9852d330b24a6b66184523c29652ae53bfcd29edd33725f483707b6c",
+    "real_sites_v0.csv": "45144f2da2bac4d8f5a2e96493bf3654cd2fe815eba5e7161c4dc4257fce3483",
+    "real_graph_v0_edges.csv": "995841419de6e9b73840f99b100d68d03dcaaa3d2877cb6cb07110dcde4badac",
+    "benchmark_cases.json": "d50a038caff12da2a199bcafa341188281a1b245a27de5700ea0f43ad19a1b6c"
+  },
+  "budget_per_policy": 18,
+  "detected_fraction_includes_confirmed_initial_site": true,
+  "adaptive_mean_detected_fraction": 0.4046496363114011,
+  "static_mean_detected_fraction": 0.4016546868164515,
+  "mean_delta_percentage_points": 0.2994949494949494,
+  "relative_difference_percent": 0.7456528190142198,
+  "matched_or_exceeded_cases": 90,
+  "strictly_better_cases": 13,
+  "tied_cases": 77,
+  "worse_cases": 10,
+  "missions": 492,
+  "effort_action_counts": {
+    "1": 117,
+    "3": 189,
+    "6": 186
+  },
+  "cases_with_multiple_effort_levels": 57,
+  "cases_with_revisits": 0,
+  "mission_count_range": [
+    3,
+    14
+  ],
+  "paired_descriptive_bootstrap": {
+    "replicates": 10000,
+    "seed": 20261002,
+    "interval95_percentage_points": [
+      -1.406895743145743,
+      2.0062635281385277
+    ],
+    "interpretation": "Resampling sensitivity within this frozen demo library; not field effectiveness or a formal held-out benchmark."
+  },
+  "field_effectiveness_validated": false,
+  "measured_monetary_savings": null
+}

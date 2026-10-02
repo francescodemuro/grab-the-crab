@@ -4,7 +4,7 @@ import csv
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
 
 from ..environment import Environment
 from ..models import IncidentConfig, MissionAction
@@ -12,7 +12,8 @@ from ..planners import Planner
 from ..spatial_belief import EcologicalHypothesis, QHypothesis
 from ..spatial_mission_loop import SpatialAdaptiveMissionLoop
 from ..world_models import WorldModel
-from .site_effort_policy import SiteEffortRoundPolicy
+if TYPE_CHECKING:
+    from .site_effort_policy import SiteEffortRoundPolicy
 from .spatial_metrics import compute_spatial_primary_metrics
 
 # R7 planner-agnostic benchmark (docs/DEMU_HANDOFF_R7.md "Required

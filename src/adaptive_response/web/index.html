@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#f4f7fb" />
   <title>Grab the Crab — Adaptive First Response</title>
   <link rel="stylesheet" href="/static/styles.css" />
+  <link rel="icon" type="image/svg+xml" href="/static/crab.svg" />
 </head>
 <body>
   <div id="transition-layer" class="transition-layer hidden" aria-live="polite">
@@ -38,7 +39,7 @@
 
       <div class="header-live">
         <span class="live-dot"></span>
-        <span>Live incident</span>
+        <span>Evaluation incident</span>
       </div>
 
       <div class="header-controls">
@@ -50,6 +51,11 @@
         <button id="reset-btn" class="icon-button" title="Reset incident">↻</button>
       </div>
     </header>
+
+    <section class="evaluation-notice" aria-label="Evaluation scope">
+      <div><strong>EVALUATION WORKSPACE</strong><span>Simulated surveys on real monitoring sites. Field effectiveness and monetary savings remain unvalidated.</span></div>
+      <a class="receipt-download" href="/api/receipt" download>Export decision receipt ↓</a>
+    </section>
 
     <section class="status-ribbon" aria-label="Incident status">
       <div class="status-item detection-status">
@@ -176,6 +182,7 @@
               <button id="zoom-fit" title="Fit all sites">Fit</button>
               <button id="zoom-in" title="Zoom in">+</button>
             </div>
+            <label class="online-map-control"><input id="online-map-toggle" type="checkbox" /> Online imagery</label>
           </div>
         </div>
 
@@ -206,7 +213,7 @@
           </div>
 
           <div id="map-inspector" class="map-inspector"></div>
-          <div class="map-attribution">Real monitoring coordinates · imagery © Esri · fallback © OpenStreetMap contributors</div>
+          <div id="map-attribution" class="map-attribution">Real monitoring coordinates · offline geographic network</div>
           <div id="node-tooltip" class="tooltip hidden"></div>
 
           <div id="replan-callout" class="replan-callout hidden">
@@ -221,8 +228,8 @@
         <div class="species-photo-wrap">
           <img
             class="species-photo"
-            src="https://upload.wikimedia.org/wikipedia/commons/0/06/European_Green_Crab.jpg"
-            alt="European Green Crab, Carcinus maenas"
+            src="/static/crab.svg"
+            alt="Stylized crab illustration; target species: Carcinus maenas"
             loading="lazy"
             referrerpolicy="no-referrer"
           />

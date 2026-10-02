@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" role="img" aria-label="Stylized crab illustration">
+  <rect width="800" height="360" fill="#102a40"/>
+  <g fill="none" stroke="#24526a" stroke-width="2" opacity=".5">
+    <path d="M0 260Q100 220 200 260T400 260T600 260T800 260M0 300Q100 260 200 300T400 300T600 300T800 300"/>
+    <circle cx="400" cy="180" r="150"/><circle cx="400" cy="180" r="120"/>
+  </g>
+  <g transform="translate(254 69) scale(4.6)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 21c2-8 8-13 14-13s12 5 14 13v8c0 7-6 12-14 12s-14-5-14-12Z" fill="#52ba93"/>
+    <path d="M19 24 10 19 5 12m40 12 9-5 5-7M18 29 8 30l-5 6m43-7 10 1 5 6M20 34 11 40m33-6 9 6M7 12c-3-1-5-4-4-7 4 0 7 2 8 5m46 2c3-1 5-4 4-7-4 0-7 2-8 5" fill="none" stroke="#52ba93" stroke-width="3"/>
+    <circle cx="24" cy="15.5" r="2.4" fill="#102a40"/><circle cx="40" cy="15.5" r="2.4" fill="#102a40"/>
+  </g>
+</svg>

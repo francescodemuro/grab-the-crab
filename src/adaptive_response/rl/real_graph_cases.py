@@ -7,6 +7,7 @@ from statistics import median
 
 from ..incident_subgraph import audit_all_incident_seeds, extract_incident_subgraph, load_graph_edges
 from ..models import Edge, IncidentConfig, Site
+from ..resources import asset_path
 from ..simulator_criticism import _habitat_score, _local_xy_km, read_real_sites
 
 # R8 real-site context (docs/R8_DEMU_BENCHMARK_REVIEW.md, configs/real_site_context_r8.json):
@@ -18,9 +19,9 @@ from ..simulator_criticism import _habitat_score, _local_xy_km, read_real_sites
 # from placeholders to the versioned real values.
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-REAL_GRAPH_EDGES_CSV = REPO_ROOT / "reports" / "milestones" / "r2_real_graph_v0" / "real_graph_v0_edges.csv"
-REAL_SITES_CSV = REPO_ROOT / "reports" / "milestones" / "r2_real_graph_v0" / "real_sites_v0.csv"
-REAL_SITE_CONTEXT_R8_JSON = REPO_ROOT / "configs" / "real_site_context_r8.json"
+REAL_GRAPH_EDGES_CSV = asset_path("real_graph_v0_edges.csv")
+REAL_SITES_CSV = asset_path("real_sites_v0.csv")
+REAL_SITE_CONTEXT_R8_JSON = asset_path("real_site_context_r8.json")
 ISOLATED_SITE_IDS = ("219", "367", "74")  # from real_graph_v0_audit.json primary_graph.isolated_sites
 
 

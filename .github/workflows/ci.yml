@@ -1,0 +1,96 @@
+name: Buyer evaluation checks
+on:
+  push:
+    branches: [main, sale-readiness]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.11', '3.12']
+    env:
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '${{ matrix.python }}'
+      - run: python -m pip install -e '.[dev,ui]'
+      - run: pytest -ra
+      - run: grab-the-crab doctor
+      - run: python scripts/check_release.py
+      - run: python -m build
+      - name: Install wheel outside checkout, without PyTorch
+        shell: bash
+        run: |
+          python -m venv /tmp/gtc-wheel
+          /tmp/gtc-wheel/bin/python -m pip install dist/*.whl 'fastapi>=0.110,<1' 'uvicorn>=0.29,<1' 'httpx>=0.27,<1'
+          cd /tmp
+          /tmp/gtc-wheel/bin/python "$GITHUB_WORKSPACE/scripts/verify_installed_demo.py"
+  learned-policy:
+    runs-on: ubuntu-latest
+    env:
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'torch>=2.6,<3' --index-url https://download.pytorch.org/whl/cpu
+      - run: python -m pip install -e '.[dev,ui,rl]'
+      - run: pytest -ra
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t grab-the-crab:ci .
+      - name: Check container readiness and static assets
+        shell: bash
+        run: |
+          docker run -d --name crab --read-only --tmpfs /tmp --cap-drop ALL -p 127.0.0.1:8000:8000 grab-the-crab:ci
+          trap 'docker logs crab; docker rm -f crab' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8000/readyz; then break; fi
+            sleep 1
+          done
+          curl --fail http://127.0.0.1:8000/readyz
+          curl --fail http://127.0.0.1:8000/static/app.js -o /dev/null
+          curl --fail http://127.0.0.1:8000/api/state -o /dev/null
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: python -m pip install -r requirements/demo-py312.txt
+      - run: python -m pip install --no-deps -e .
+      - run: npm install --prefix /tmp/crab-browser playwright@1.62.1
+      - run: /tmp/crab-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Exercise the default mission, offline assets, export and isolation
+        shell: bash
+        env:
+          NODE_PATH: /tmp/crab-browser/node_modules
+        run: |
+          python -m uvicorn adaptive_response.web_app:app --host 127.0.0.1 --port 8000 --workers 1 > /tmp/crab-server.log 2>&1 &
+          server_pid=$!
+          trap 'cat /tmp/crab-server.log; kill "$server_pid"' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8000/readyz; then break; fi
+            sleep 1
+          done
+          node scripts/browser_smoke.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-evaluation
+          path: artifacts/browser/
