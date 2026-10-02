@@ -43,6 +43,7 @@ The local launcher binds loopback. To allow a buyer to access a remote demo, pla
 
 - The default map is an offline geographic network view. Enabling **Online imagery** sends tile requests to Esri and possibly OpenStreetMap; provider attribution is then shown. Provider access/terms and commercial use need a separate review.
 - The species illustration is a bundled SVG derived from the project's existing crab mark; no remote photograph is loaded.
+- Optional `/docs` and `/redoc` schema viewers use FastAPI's default CDN assets; `/openapi.json` is available locally without those viewers.
 - Optional natural-language tools use the `llm` extra and an externally supplied `OPENAI_API_KEY`. They are not required by the default UI. Confirm data-sharing terms before using them with private buyer data.
 - Raw dataset download utilities are separate from the offline demo. They may require network access and upstream service availability.
 

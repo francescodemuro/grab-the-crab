@@ -1,6 +1,6 @@
 # Evaluation API contract
 
-Base URL: `http://127.0.0.1:8000`. Interactive OpenAPI documentation: `/docs`. This API runs synthetic evaluation incidents.
+Base URL: `http://127.0.0.1:8000`. OpenAPI schema: `/openapi.json`; optional interactive documentation: `/docs`. The interactive documentation loads FastAPI's default CDN assets and requires network access. The default evaluation dashboard runs offline. This API runs synthetic evaluation incidents.
 
 Call `/api/cases` or `/api/state` first and preserve the returned HTTP-only, same-site session cookie. A browser profile has one session; another profile has another. Use a cookie jar for command-line clients. State responses are not cached. The cookie is marked secure over HTTPS.
 

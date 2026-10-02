@@ -13,14 +13,17 @@ Source preparation baseline: `9712c241fb5f3f7f3806fda84617ec2c7a2aeb76`. Softwar
 | Dependency metadata | 20 core/UI packages recorded | Version/license metadata, not complete rights clearance |
 | Known dependency advisories | No known vulnerabilities reported by pip-audit 2.10.1 | Pinned Python 3.12 core/UI requirements; optional extras/container OS/source logic excluded |
 | JavaScript parse | `node --check` passed | Current frontend file |
-| Actual browser interaction | Not executed locally | The environment has no browser executable and browser binary download was unavailable; automated browser job provided |
-| Container execution | Passed in GitHub Actions run 37011367718 | Image build, readiness, static asset and API state checks |
-| Python 3.11 | Passed in GitHub Actions run 37011367718 | Core/UI, build, fixture/evidence check and installed wheel |
+| Actual browser interaction | Passed in GitHub Actions run 37011810795 | Chromium: six missions, budget 18, replanning after mission three, receipt download, independent browser session, zero external requests and zero JavaScript errors |
+| Mobile layout | Passed at 390px in the same browser run | Screenshot captured; document width 390px, no horizontal overflow |
+| Container execution | Passed in GitHub Actions run 37011810795 | Image build, readiness, static asset and API state checks |
+| Python 3.11 and 3.12 | Passed in GitHub Actions run 37011810795 | Core/UI, build, fixture/evidence check and installed wheel |
+| Learned-policy CI | Passed in GitHub Actions run 37011810795 | Full suite with CPU PyTorch |
+| API documentation | Verified locally | OpenAPI version 0.2.0; optional Swagger viewer accessible; dashboard retains its strict content-security policy |
 
 The dependency advisory output is in `reports/sale_review/dependency-vulnerabilities.json`. A no-findings package advisory scan is not a security certification. It must be rerun before a contractual release, with the final optional extras and container image included if those are delivered.
 
 The full suite emits one upstream Starlette warning about TestClient's future `httpx` transition. Tests pass; the current recorded UI environment retains the supported behavior used by this release.
 
-CI status must be read from actual workflow runs. Definitions are not evidence that remote checks passed. Container and Python 3.11 checks passed in the linked run. The first browser automation attempted to click the already-disabled follow button while its recommendation was selected; the check now accepts the selected state and verifies alignment explicitly. Browser verification is pending its corrected run.
+All five jobs completed successfully in the linked remote run. The browser job also publishes desktop/mobile screenshots and a downloaded receipt as the `browser-evaluation` artifact. Local browser execution was unavailable; the interaction results above were observed in the real Chromium instance on GitHub Actions. CI status for later revisions must be read from their actual workflow runs.
 
-Remote run: https://github.com/francescodemuro/grab-the-crab/actions/runs/37011367718
+Recorded remote run: https://github.com/francescodemuro/grab-the-crab/actions/runs/37011810795 (commit `c4b78d0a15c17acc78825c7ec27bdc9b1431e47f`).

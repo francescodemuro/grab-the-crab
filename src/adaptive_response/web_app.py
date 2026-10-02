@@ -65,6 +65,11 @@ def create_app(store: SessionStore | None = None) -> FastAPI:
             "img-src 'self' https://server.arcgisonline.com https://tile.openstreetmap.org; "
             "connect-src 'self'; frame-ancestors 'none'; form-action 'none'"
         )
+        if request.url.path in ("/docs", "/redoc"):
+            # FastAPI's optional schema viewers load their own CDN scripts and
+            # inline bootstrap. The evaluation dashboard keeps the stricter
+            # policy above; these documentation routes retain their defaults.
+            del response.headers["Content-Security-Policy"]
         if request.url.path.startswith("/api/"):
             response.headers["Cache-Control"] = "no-store"
         return response
