@@ -14,11 +14,13 @@ Source preparation baseline: `9712c241fb5f3f7f3806fda84617ec2c7a2aeb76`. Softwar
 | Known dependency advisories | No known vulnerabilities reported by pip-audit 2.10.1 | Pinned Python 3.12 core/UI requirements; optional extras/container OS/source logic excluded |
 | JavaScript parse | `node --check` passed | Current frontend file |
 | Actual browser interaction | Not executed locally | The environment has no browser executable and browser binary download was unavailable; automated browser job provided |
-| Container execution | Not executed locally | No Docker daemon available; container CI job provided |
-| Python 3.11 | CI definition provided; no local interpreter available | Use declared dependency ranges; the pinned snapshot is Python 3.12 only |
+| Container execution | Passed in GitHub Actions run 37011367718 | Image build, readiness, static asset and API state checks |
+| Python 3.11 | Passed in GitHub Actions run 37011367718 | Core/UI, build, fixture/evidence check and installed wheel |
 
 The dependency advisory output is in `reports/sale_review/dependency-vulnerabilities.json`. A no-findings package advisory scan is not a security certification. It must be rerun before a contractual release, with the final optional extras and container image included if those are delivered.
 
 The full suite emits one upstream Starlette warning about TestClient's future `httpx` transition. Tests pass; the current recorded UI environment retains the supported behavior used by this release.
 
-CI status must be read from actual workflow runs. Definitions are not evidence that remote checks passed. Browser and container checks remain explicit verification items until executed in an environment that supports them.
+CI status must be read from actual workflow runs. Definitions are not evidence that remote checks passed. Container and Python 3.11 checks passed in the linked run. The first browser automation attempted to click the already-disabled follow button while its recommendation was selected; the check now accepts the selected state and verifies alignment explicitly. Browser verification is pending its corrected run.
+
+Remote run: https://github.com/francescodemuro/grab-the-crab/actions/runs/37011367718

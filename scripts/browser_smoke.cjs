@@ -20,8 +20,14 @@ fs.mkdirSync(output, {recursive:true});
  await page.waitForFunction(()=>state.data?.case?.case_id==='incident_079');
  if(await page.locator('#case-select option').count()!==100)throw Error('Frozen case count');
  if(await page.locator('#online-map-toggle').isChecked())throw Error('Online imagery enabled by default');
+ async function followRecommendation(){
+  const button=page.locator('#follow-marine-btn');
+  if(await button.isEnabled())await button.click();
+  const aligned=await page.evaluate(()=>{const top=state.data.global_recommendations[0]; return state.selectedSite===top.site_id && state.selectedEffort===Number(top.recommended_effort);});
+  if(!aligned)throw Error('Operator selection did not follow the recommendation');
+ }
  for(let i=0;i<3;i++){
-  await page.locator('#follow-marine-btn').click();
+  await followRecommendation();
   await page.locator('#deploy-btn').click();
   await page.waitForFunction(()=>!state.busy && state.data.resources.round>0);
  }
@@ -29,7 +35,7 @@ fs.mkdirSync(output, {recursive:true});
  if(middle.round!==3 || middle.spent!==15 || !middle.changed)throw Error('Default evidence-driven replan did not reproduce '+JSON.stringify(middle));
  await page.screenshot({path:path.join(output, 'evaluation-demo.png'),fullPage:true});
  for(let i=0;i<3;i++){
-  await page.locator('#follow-marine-btn').click();
+  await followRecommendation();
   await page.locator('#deploy-btn').click();
   await page.waitForFunction(()=>!state.busy);
  }

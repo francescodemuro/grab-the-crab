@@ -11,7 +11,7 @@ After a first confirmed detection, Grab the Crab helps an operator decide **wher
 Use Python **3.12** for the recorded evaluation environment. Python 3.11 is also supported through the dependency ranges in `pyproject.toml`.
 
 ```bash
-git clone https://github.com/francescodemuro/grab-the-crab.git
+git clone --branch sale-readiness https://github.com/francescodemuro/grab-the-crab.git
 cd grab-the-crab
 python3.12 -m venv .venv
 source .venv/bin/activate
